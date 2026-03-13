@@ -1,0 +1,44 @@
+name: Project North E.Y.E Pipeline
+
+on:
+  schedule:
+    - cron: '0 * * * *'  # Runs every hour
+  workflow_dispatch:      # Allows you to run it manually for testing
+
+jobs:
+  run-cti-pipeline:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install Dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Run Pipeline
+        env:
+          # Link your GitHub Secrets to Environment Variables
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          TWITTER_BEARER_TOKEN: ${{ secrets.TWITTER_BEARER_TOKEN }}
+          ALIENVAULT_API_KEY: ${{ secrets.ALIENVAULT_API_KEY }}
+          # Add others as needed...
+        run: |
+          python aggregator.py
+          python synthesizer.py
+          python province_stats.py
+
+      - name: Commit and Push Updates
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add threats.json stats.json alerted_ids.txt
+          git diff-index --quiet HEAD || git commit -m "Auto-update threat data [skip ci]"
+          git push
