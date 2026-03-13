@@ -1,0 +1,229 @@
+name: 🍁 North E.Y.E. — AI Council Sync
+
+on:
+  schedule:
+    - cron: '0 * * * *'
+  workflow_dispatch:
+    inputs:
+      force_purge:
+        description: 'Force purge expired threats (30-day TTL)'
+        required: false
+        default: 'false'
+      channels:
+        description: 'Alert channels (slack,email,discord,teams)'
+        required: false
+        default: 'slack'
+
+permissions:
+  contents: write
+
+env:
+  RAW_X_FILE:       raw_x_threats.json
+  RAW_OSINT_FILE:   raw_threats.json
+  VOTES_DIR:        votes/
+  VALIDATED_FILE:   validated_threats.json
+  SUMMARIZED_FILE:  summarized_threats.json
+  THREATS_FILE:     threats.json
+  STATS_FILE:       stats.json
+  ALERTED_IDS_FILE: alerted_ids.txt
+
+jobs:
+  council-sync:
+    name: AI Council Intelligence Cycle
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      # ════ STAGE 0 — BOOTSTRAP ════════════════════════
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 2
+
+      - name: 🐍 Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: 📦 Install Dependencies
+        run: pip install -r scripts/requirements.txt
+
+      - name: 🗂️ Create Working Directories
+        run: mkdir -p votes/
+
+      # ════ STAGE 1 — SOCIAL INTEL ═══════════════════════
+      - name: 🐦 X/Twitter Watchlist Monitor (22 accounts)
+        env:
+          TWITTER_BEARER_TOKEN: ${{ secrets.TWITTER_BEARER_TOKEN }}
+        run: |
+          python scripts/twitter_monitor.py \
+            --output ${{ env.RAW_X_FILE }} \
+            --lookback-hours 2 \
+            --tier-filter all
+        continue-on-error: true
+
+      # ════ STAGE 2 — OSINT AGGREGATION ══════════════════
+      - name: 🌐 Aggregate OSINT Feeds (9 sources)
+        env:
+          ALIENVAULT_API_KEY: ${{ secrets.ALIENVAULT_API_KEY }}
+          CHAINABUSE_API_KEY: ${{ secrets.CHAINABUSE_API_KEY }}
+          HIBP_API_KEY:       ${{ secrets.HIBP_API_KEY }}
+          CCCS_FEED_URL:      ${{ secrets.CCCS_FEED_URL }}
+          CAFC_FEED_URL:      ${{ secrets.CAFC_FEED_URL }}
+        run: |
+          python scripts/aggregator.py \
+            --output ${{ env.RAW_OSINT_FILE }} \
+            --x-signals ${{ env.RAW_X_FILE }} \
+            --sources cccs,cafc,otx,cisa,threatfox,chainabuse,hibp,x \
+            --filter-canadian
+
+      # ════ STAGE 3 — AI COUNCIL ══════════════════════════
+      - name: 🤖 Council Node — Gemini 1.5 Pro
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          python scripts/council_node.py \
+            --model gemini-1.5-pro \
+            --input ${{ env.RAW_OSINT_FILE }} \
+            --output ${{ env.VOTES_DIR }}gemini_votes.json \
+            --node-id gemini --batch-size 5
+
+      - name: 🤖 Council Node — GPT-4o
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          python scripts/council_node.py \
+            --model gpt-4o \
+            --input ${{ env.RAW_OSINT_FILE }} \
+            --output ${{ env.VOTES_DIR }}gpt4o_votes.json \
+            --node-id gpt4o --batch-size 5
+
+      - name: 🤖 Council Node — Claude Sonnet
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          python scripts/council_node.py \
+            --model claude-sonnet-4-6 \
+            --input ${{ env.RAW_OSINT_FILE }} \
+            --output ${{ env.VOTES_DIR }}claude_votes.json \
+            --node-id claude --batch-size 5
+
+      # ════ STAGE 4 — CONSENSUS ═══════════════════════════
+      - name: ✅ Consensus Engine (2/3 Rule)
+        run: |
+          python scripts/consensus.py \
+            --votes ${{ env.VOTES_DIR }} \
+            --threshold 2 \
+            --output ${{ env.VALIDATED_FILE }}
+
+      # ════ STAGE 5 — AI SYNTHESIS ════════════════════════
+      - name: 📝 AI Synthesis — Tactical Summaries
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          python scripts/synthesizer.py \
+            --input ${{ env.VALIDATED_FILE }} \
+            --output ${{ env.SUMMARIZED_FILE }} \
+            --model claude-sonnet-4-6 \
+            --batch-size 5
+
+      # ════ STAGE 6 — TTL ENFORCEMENT ═════════════════════
+      - name: 🗑️ TTL Manager — 30-Day Purge & Merge
+        run: |
+          python scripts/ttl_manager.py \
+            --input ${{ env.SUMMARIZED_FILE }} \
+            --existing ${{ env.THREATS_FILE }} \
+            --output ${{ env.THREATS_FILE }} \
+            --ttl-days 30 \
+            --merge-strategy dedup-by-id
+
+      # ════ STAGE 7 — STATS ═══════════════════════════════
+      - name: 📈 Generate Province Statistics
+        run: |
+          python scripts/province_stats.py \
+            --input ${{ env.THREATS_FILE }} \
+            --output ${{ env.STATS_FILE }}
+
+      # ════ STAGE 8 — ALERTS ══════════════════════════════
+      - name: 🚨 Alert Dispatcher
+        env:
+          SLACK_WEBHOOK_URL:   ${{ secrets.SLACK_WEBHOOK_URL }}
+          TEAMS_WEBHOOK_URL:   ${{ secrets.TEAMS_WEBHOOK_URL }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          ALERT_EMAILS:        ${{ secrets.ALERT_EMAILS }}
+          SMTP_HOST:           ${{ secrets.SMTP_HOST }}
+          SMTP_PORT:           ${{ secrets.SMTP_PORT }}
+          SMTP_USERNAME:       ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASSWORD:       ${{ secrets.SMTP_PASSWORD }}
+          SMTP_FROM:           ${{ secrets.SMTP_FROM }}
+          DASHBOARD_URL:       ${{ secrets.DASHBOARD_URL }}
+        run: |
+          python scripts/alert_dispatcher.py \
+            --threats ${{ env.THREATS_FILE }} \
+            --previous ${{ env.ALERTED_IDS_FILE }} \
+            --channels ${{ github.event.inputs.channels || 'slack' }} \
+            --min-score 50
+        continue-on-error: true
+
+      # ════ STAGE 9 — COMMIT ══════════════════════════════
+      - name: 📦 Commit Data Files to Repository
+        run: |
+          git config --global user.name  "North-EYE Bot 🍁"
+          git config --global user.email "north-eye-bot@users.noreply.github.com"
+
+          git add \
+            ${{ env.THREATS_FILE }} \
+            ${{ env.STATS_FILE }} \
+            ${{ env.ALERTED_IDS_FILE }}
+
+          THREAT_COUNT=$(python -c "
+          import json; d=json.load(open('${{ env.THREATS_FILE }}'))
+          print(d['meta']['total_threats'])")
+
+          HIGH_COUNT=$(python -c "
+          import json; d=json.load(open('${{ env.THREATS_FILE }}'))
+          print(sum(1 for t in d['threats'] if t.get('severity')=='high'))")
+
+          TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+          if git diff --staged --quiet; then
+            echo "::notice::No new threats — map is current"
+          else
+            git commit -m "🍁 CTI Sync [${TIMESTAMP}] — ${THREAT_COUNT} active (${HIGH_COUNT} high)"
+            git push
+          fi
+
+      # ════ STAGE 10 — SUMMARY ════════════════════════════
+      - name: 📊 Pipeline Summary
+        if: always()
+        run: |
+          python -c "
+          import json
+          print('='*55)
+          print('🍁 NORTH E.Y.E. — PIPELINE SUMMARY')
+          print('='*55)
+          try:
+              d = json.load(open('threats.json'))
+              t = d['threats']
+              sigs = sum(len(x.get('signal_sources',[])) for x in t)
+              x_sigs = sum(1 for x in t for s in x.get('signal_sources',[]) if s.get('type')=='x')
+              print(f'  Active Threats : {len(t)}')
+              print(f'  High Severity  : {sum(1 for x in t if x.get(\"severity\")==\"high\")}')
+              print(f'  Cyber / FinCrime: {sum(1 for x in t if x.get(\"category\")==\"cyber\")} / {sum(1 for x in t if x.get(\"category\")==\"fincrime\")}')
+              print(f'  Signal Sources : {sigs} ({x_sigs} from X)')
+              print(f'  Last Updated   : {d[\"meta\"][\"last_updated\"]}')
+          except Exception as e:
+              print(f'  Error: {e}')
+          try:
+              s = json.load(open('stats.json'))
+              n = s['national']
+              trend = n.get('trend_7d_pct', 0)
+              arrow = chr(8593) if trend > 0 else (chr(8595) if trend < 0 else chr(8594))
+              print(f'  7-Day Trend    : {arrow} {abs(trend)}%')
+              print(f'  Provinces Hit  : {n.get(\"provinces_affected\",0)}/13')
+          except Exception as e:
+              print(f'  Stats error: {e}')
+          print('='*55)
+          "

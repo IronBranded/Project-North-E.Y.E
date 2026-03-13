@@ -1,0 +1,2798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Project North E.Y.E. — Canadian Cyber Threat Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-void: #020912;
+    --bg-deep: #060e1a;
+    --bg-panel: #080f1d;
+    --bg-card: #0c1628;
+    --bg-hover: #101e35;
+    --cyan: #00c8ff;
+    --cyan-dim: rgba(0,200,255,0.15);
+    --cyan-glow: rgba(0,200,255,0.4);
+    --red: #ff2040;
+    --red-dim: rgba(255,32,64,0.15);
+    --red-glow: rgba(255,32,64,0.5);
+    --amber: #ffb800;
+    --amber-dim: rgba(255,184,0,0.15);
+    --green: #00ff88;
+    --green-dim: rgba(0,255,136,0.12);
+    --text-primary: #c8d8f0;
+    --text-secondary: #5a7a9a;
+    --text-muted: #2a4060;
+    --border: rgba(0,200,255,0.1);
+    --border-bright: rgba(0,200,255,0.3);
+    --font-display: 'Orbitron', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --font-body: 'Syne', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg-void);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    height: 100vh;
+    overflow: hidden;
+    display: grid;
+    grid-template-rows: 60px 1fr;
+    grid-template-columns: 1fr;
+  }
+
+  /* ─── SCANLINE OVERLAY ─── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.08) 2px,
+      rgba(0,0,0,0.08) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* ─── AMBIENT GRID ─── */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,200,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,200,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ─── HEADER ─── */
+  header {
+    position: relative;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 0 20px;
+    background: rgba(6,14,26,0.95);
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(10px);
+  }
+
+  .logo-block {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+
+  .logo-icon {
+    width: 36px;
+    height: 36px;
+    position: relative;
+  }
+
+  .logo-icon svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .logo-text {
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 3px;
+    color: var(--cyan);
+    text-shadow: 0 0 20px var(--cyan-glow);
+    line-height: 1.1;
+  }
+
+  .logo-sub {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--text-secondary);
+    letter-spacing: 2px;
+    display: block;
+    margin-top: 1px;
+  }
+
+  .header-divider {
+    width: 1px;
+    height: 28px;
+    background: var(--border);
+  }
+
+  /* ─── SEARCH BAR ─── */
+  .search-wrap {
+    flex: 1;
+    max-width: 480px;
+    position: relative;
+  }
+
+  .search-wrap input {
+    width: 100%;
+    background: rgba(0,200,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 7px 14px 7px 36px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-primary);
+    outline: none;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+  }
+
+  .search-wrap input::placeholder { color: var(--text-muted); }
+  .search-wrap input:focus {
+    border-color: var(--cyan);
+    background: rgba(0,200,255,0.07);
+    box-shadow: 0 0 0 1px rgba(0,200,255,0.2), 0 0 20px rgba(0,200,255,0.1);
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 11px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+    font-size: 13px;
+  }
+
+  /* ─── HEADER STATS ─── */
+  .header-stats {
+    display: flex;
+    gap: 20px;
+    margin-left: auto;
+  }
+
+  .hstat {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 1px;
+  }
+
+  .hstat-val {
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1;
+  }
+
+  .hstat-val.red { color: var(--red); text-shadow: 0 0 10px var(--red-glow); }
+  .hstat-val.amber { color: var(--amber); }
+  .hstat-val.cyan { color: var(--cyan); text-shadow: 0 0 10px var(--cyan-glow); }
+
+  .hstat-label {
+    font-family: var(--font-mono);
+    font-size: 8px;
+    color: var(--text-muted);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+
+  .live-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--green);
+    letter-spacing: 1px;
+  }
+
+  .live-dot {
+    width: 6px;
+    height: 6px;
+    background: var(--green);
+    border-radius: 50%;
+    box-shadow: 0 0 6px var(--green);
+    animation: livePulse 2s ease-in-out infinite;
+  }
+
+  @keyframes livePulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 6px var(--green); }
+    50% { opacity: 0.4; box-shadow: 0 0 2px var(--green); }
+  }
+
+  /* ─── FILTER CHIPS ─── */
+  .filter-chips {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .chip {
+    padding: 3px 10px;
+    border-radius: 2px;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.15s;
+    border: 1px solid transparent;
+    user-select: none;
+  }
+
+  .chip.all { border-color: var(--border-bright); color: var(--cyan); }
+  .chip.cyber { border-color: rgba(255,32,64,0.3); color: var(--red); }
+  .chip.fincrime { border-color: rgba(255,184,0,0.3); color: var(--amber); }
+  .chip.active, .chip:hover { background: rgba(255,255,255,0.05); }
+  .chip.all.active { background: var(--cyan-dim); }
+  .chip.cyber.active { background: var(--red-dim); }
+  .chip.fincrime.active { background: var(--amber-dim); }
+
+  /* ─── MAIN LAYOUT ─── */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 300px 1fr 340px;
+    overflow: hidden;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ─── LEFT SIDEBAR — THREAT FEED ─── */
+  .sidebar {
+    background: var(--bg-panel);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .sidebar-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  .sidebar-title {
+    font-family: var(--font-display);
+    font-size: 9px;
+    letter-spacing: 3px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+  }
+
+  .feed-count {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--cyan);
+    background: var(--cyan-dim);
+    padding: 2px 7px;
+    border-radius: 2px;
+  }
+
+  .threat-feed {
+    overflow-y: auto;
+    flex: 1;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  .threat-feed::-webkit-scrollbar { width: 3px; }
+  .threat-feed::-webkit-scrollbar-track { background: transparent; }
+  .threat-feed::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .threat-item {
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(0,200,255,0.05);
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+  }
+
+  .threat-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: transparent;
+    transition: background 0.15s;
+  }
+
+  .threat-item.cyber::before { background: var(--red); }
+  .threat-item.fincrime::before { background: var(--amber); }
+
+  .threat-item:hover, .threat-item.selected {
+    background: var(--bg-hover);
+  }
+
+  .threat-item.hidden { display: none; }
+
+  .threat-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 5px;
+  }
+
+  .threat-badge {
+    font-family: var(--font-mono);
+    font-size: 8px;
+    letter-spacing: 1.5px;
+    padding: 2px 6px;
+    border-radius: 2px;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+
+  .threat-badge.cyber { background: var(--red-dim); color: var(--red); border: 1px solid rgba(255,32,64,0.3); }
+  .threat-badge.fincrime { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(255,184,0,0.3); }
+
+  .threat-severity {
+    font-family: var(--font-mono);
+    font-size: 8px;
+    color: var(--text-muted);
+    margin-left: auto;
+  }
+
+  .threat-severity.high { color: var(--red); }
+  .threat-severity.medium { color: var(--amber); }
+  .threat-severity.low { color: var(--green); }
+
+  .threat-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+    line-height: 1.35;
+  }
+
+  .threat-province {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .threat-province::before {
+    content: '◈';
+    font-size: 7px;
+    color: var(--cyan);
+  }
+
+  .threat-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    margin-top: 6px;
+  }
+
+  .tag {
+    font-family: var(--font-mono);
+    font-size: 8px;
+    color: var(--text-muted);
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    padding: 1px 5px;
+    border-radius: 2px;
+    letter-spacing: 0.5px;
+  }
+
+  .threat-time {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--text-muted);
+    margin-top: 5px;
+  }
+
+  /* ─── MAP AREA ─── */
+  .map-area {
+    position: relative;
+    overflow: hidden;
+    background: var(--bg-void);
+  }
+
+  .map-bg {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 40% at 50% 50%, rgba(0,200,255,0.03) 0%, transparent 70%),
+      radial-gradient(ellipse 30% 30% at 20% 80%, rgba(0,100,200,0.04) 0%, transparent 60%);
+  }
+
+  #canada-map {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    z-index: 1;
+  }
+
+  .province-path {
+    fill: rgba(0,200,255,0.04);
+    stroke: rgba(0,200,255,0.18);
+    stroke-width: 1;
+    transition: fill 0.2s;
+    cursor: default;
+  }
+
+  .province-path:hover {
+    fill: rgba(0,200,255,0.08);
+    stroke: rgba(0,200,255,0.35);
+  }
+
+  .province-label {
+    fill: rgba(0,200,255,0.35);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1px;
+    pointer-events: none;
+    text-anchor: middle;
+  }
+
+  /* ─── THREAT DOTS ─── */
+  .threat-dot-wrap {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    cursor: pointer;
+    z-index: 10;
+  }
+
+  .threat-dot {
+    border-radius: 50%;
+    position: relative;
+  }
+
+  .threat-dot.cyber { background: var(--red); box-shadow: 0 0 8px var(--red-glow); }
+  .threat-dot.fincrime { background: var(--amber); box-shadow: 0 0 8px rgba(255,184,0,0.6); }
+
+  .pulse-ring {
+    position: absolute;
+    border-radius: 50%;
+    animation: pulseRing 2s ease-out infinite;
+    transform: translate(-50%, -50%);
+    top: 50%;
+    left: 50%;
+  }
+
+  .pulse-ring.cyber { border: 1px solid var(--red); }
+  .pulse-ring.fincrime { border: 1px solid var(--amber); }
+
+  @keyframes pulseRing {
+    0% { width: 8px; height: 8px; opacity: 0.8; }
+    100% { width: 48px; height: 48px; opacity: 0; }
+  }
+
+  .pulse-ring:nth-child(2) { animation-delay: 0.7s; }
+  .pulse-ring:nth-child(3) { animation-delay: 1.4s; }
+
+  /* ─── MAP TOOLTIP ─── */
+  .map-tooltip {
+    position: absolute;
+    background: rgba(6,14,26,0.95);
+    border: 1px solid var(--border-bright);
+    border-radius: 4px;
+    padding: 8px 12px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-primary);
+    pointer-events: none;
+    z-index: 50;
+    display: none;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5), 0 0 20px rgba(0,200,255,0.1);
+    max-width: 200px;
+    line-height: 1.5;
+  }
+
+  /* ─── MAP LEGEND ─── */
+  .map-legend {
+    position: absolute;
+    bottom: 16px;
+    left: 16px;
+    background: rgba(6,14,26,0.85);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 10px 14px;
+    backdrop-filter: blur(10px);
+    z-index: 20;
+  }
+
+  .legend-title {
+    font-family: var(--font-mono);
+    font-size: 8px;
+    letter-spacing: 2px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+  }
+
+  .legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .legend-dot.cyber { background: var(--red); box-shadow: 0 0 6px var(--red); }
+  .legend-dot.fincrime { background: var(--amber); box-shadow: 0 0 6px var(--amber); }
+
+  /* ─── MAP TIMESTAMP ─── */
+  .map-timestamp {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--text-muted);
+    letter-spacing: 2px;
+    background: rgba(6,14,26,0.7);
+    padding: 4px 12px;
+    border-radius: 2px;
+    border: 1px solid var(--border);
+  }
+
+  /* ─── RIGHT PANEL — DETAIL ─── */
+  .detail-panel {
+    background: var(--bg-panel);
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .detail-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .detail-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2px;
+  }
+
+  .detail-panel-label {
+    font-family: var(--font-display);
+    font-size: 9px;
+    letter-spacing: 3px;
+    color: var(--text-secondary);
+  }
+
+  .detail-id {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--text-muted);
+  }
+
+  .detail-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  .detail-content::-webkit-scrollbar { width: 3px; }
+  .detail-content::-webkit-scrollbar-thumb { background: var(--border); }
+
+  .detail-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 12px;
+    color: var(--text-muted);
+  }
+
+  .detail-empty-icon {
+    font-size: 32px;
+    opacity: 0.3;
+  }
+
+  .detail-empty-text {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-align: center;
+  }
+
+  /* ─── DETAIL SECTIONS ─── */
+  .d-section {
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(0,200,255,0.06);
+  }
+
+  .d-section-label {
+    font-family: var(--font-mono);
+    font-size: 8px;
+    letter-spacing: 2px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .d-section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .d-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.35;
+    margin-bottom: 8px;
+  }
+
+  .d-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-bottom: 10px;
+  }
+
+  .d-badge {
+    font-family: var(--font-mono);
+    font-size: 8px;
+    padding: 3px 8px;
+    border-radius: 2px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+
+  .d-badge.cyber { background: var(--red-dim); color: var(--red); border: 1px solid rgba(255,32,64,0.3); }
+  .d-badge.fincrime { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(255,184,0,0.3); }
+  .d-badge.high { background: rgba(255,32,64,0.1); color: var(--red); border: 1px solid rgba(255,32,64,0.2); }
+  .d-badge.medium { background: rgba(255,184,0,0.1); color: var(--amber); border: 1px solid rgba(255,184,0,0.2); }
+  .d-badge.low { background: rgba(0,255,136,0.1); color: var(--green); border: 1px solid rgba(0,255,136,0.2); }
+
+  .d-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .d-field {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .d-field-label {
+    font-family: var(--font-mono);
+    font-size: 8px;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .d-field-val {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-primary);
+  }
+
+  .d-field-val.accent { color: var(--cyan); }
+
+  /* ─── IOC TABLE ─── */
+  .ioc-list { display: flex; flex-direction: column; gap: 4px; }
+
+  .ioc-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0,200,255,0.03);
+    border: 1px solid rgba(0,200,255,0.08);
+    border-radius: 3px;
+    padding: 5px 8px;
+  }
+
+  .ioc-type {
+    font-family: var(--font-mono);
+    font-size: 7px;
+    color: var(--cyan);
+    background: var(--cyan-dim);
+    padding: 1px 5px;
+    border-radius: 2px;
+    letter-spacing: 1px;
+    flex-shrink: 0;
+    text-transform: uppercase;
+  }
+
+  .ioc-val {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--text-secondary);
+    word-break: break-all;
+    flex: 1;
+  }
+
+  /* ─── AI SUMMARY ─── */
+  .ai-summary {
+    background: linear-gradient(135deg, rgba(0,200,255,0.05), rgba(0,100,200,0.05));
+    border: 1px solid rgba(0,200,255,0.12);
+    border-radius: 4px;
+    padding: 12px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .ai-summary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+    opacity: 0.5;
+  }
+
+  .ai-label {
+    font-family: var(--font-mono);
+    font-size: 8px;
+    color: var(--cyan);
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .ai-label::before {
+    content: '⬡';
+    animation: spin 4s linear infinite;
+    display: inline-block;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .ai-text {
+    font-size: 11px;
+    line-height: 1.65;
+    color: var(--text-secondary);
+  }
+
+  /* ─── COUNCIL VALIDATION ─── */
+  .council-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  .council-node {
+    flex: 1;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 7px;
+    text-align: center;
+  }
+
+  .council-name {
+    font-family: var(--font-mono);
+    font-size: 8px;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+
+  .council-vote {
+    font-size: 14px;
+  }
+
+  .council-vote.agree { color: var(--green); }
+  .council-vote.disagree { color: var(--red); }
+
+  /* ─── SOURCE TYPE BADGES ─── */
+  .source-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-family: var(--font-mono);
+    font-size: 7px;
+    padding: 1px 5px;
+    border-radius: 2px;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .source-badge.gov   { background: rgba(0,200,255,0.12); color: var(--cyan); border: 1px solid rgba(0,200,255,0.25); }
+  .source-badge.x     { background: rgba(255,255,255,0.06); color: #e7e9ea; border: 1px solid rgba(255,255,255,0.12); }
+  .source-badge.osint { background: rgba(0,255,136,0.1); color: var(--green); border: 1px solid rgba(0,255,136,0.2); }
+  .source-badge.blockchain { background: rgba(255,184,0,0.1); color: var(--amber); border: 1px solid rgba(255,184,0,0.2); }
+  .source-badge.police { background: rgba(100,140,255,0.12); color: #7c9dff; border: 1px solid rgba(100,140,255,0.25); }
+
+  /* ─── SIGNAL SOURCES PANEL ─── */
+  .signal-source-item {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 4px;
+    padding: 9px 10px;
+    margin-bottom: 6px;
+    position: relative;
+    transition: border-color 0.15s;
+  }
+
+  .signal-source-item:hover { border-color: rgba(255,255,255,0.12); }
+
+  .signal-source-item.x-post  { border-left: 2px solid rgba(231,233,234,0.4); }
+  .signal-source-item.gov-post { border-left: 2px solid var(--cyan); }
+  .signal-source-item.police-post { border-left: 2px solid #7c9dff; }
+  .signal-source-item.osint-post { border-left: 2px solid var(--green); }
+
+  .signal-header {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 5px;
+  }
+
+  .signal-avatar {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    flex-shrink: 0;
+    font-family: var(--font-mono);
+    color: var(--text-muted);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .signal-handle {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--text-primary);
+    font-weight: 700;
+    flex: 1;
+  }
+
+  .signal-handle .at { color: var(--text-muted); font-weight: 400; }
+
+  .signal-verified {
+    font-size: 9px;
+    color: var(--cyan);
+  }
+
+  .signal-type-chip {
+    font-family: var(--font-mono);
+    font-size: 7px;
+    padding: 1px 5px;
+    border-radius: 2px;
+    letter-spacing: 0.8px;
+  }
+
+  .signal-time {
+    font-family: var(--font-mono);
+    font-size: 8px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+
+  .signal-text {
+    font-size: 10px;
+    line-height: 1.55;
+    color: var(--text-secondary);
+    font-family: var(--font-body);
+  }
+
+  .signal-text .highlight {
+    color: var(--cyan);
+    background: rgba(0,200,255,0.08);
+    padding: 0 2px;
+    border-radius: 2px;
+  }
+
+  .signal-text .hash { color: var(--amber); }
+
+  .signal-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: var(--font-mono);
+    font-size: 8px;
+    color: var(--text-muted);
+    margin-top: 5px;
+    text-decoration: none;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: color 0.15s;
+  }
+
+  .signal-link:hover { color: var(--cyan); }
+
+  /* ─── SOURCE LEGEND TRAY ─── */
+  .source-tray {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    padding: 8px 10px;
+    background: rgba(0,0,0,0.2);
+    border-radius: 3px;
+    margin-bottom: 6px;
+  }
+
+  /* ─── X WATCHLIST PANEL  ─── */
+  .watchlist-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-family: var(--font-mono);
+    font-size: 9px;
+  }
+
+  .watchlist-item:last-child { border-bottom: none; }
+
+  .watchlist-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .watchlist-dot.active   { background: var(--green); box-shadow: 0 0 4px var(--green); }
+  .watchlist-dot.inactive { background: var(--text-muted); }
+
+  .watchlist-handle { color: var(--text-primary); flex: 1; }
+  .watchlist-category { color: var(--text-muted); font-size: 8px; }
+  .watchlist-count { color: var(--cyan); font-size: 8px; }
+
+  /* ─── PROVINCE HEATMAP ─── */
+  .province-path.heat-low     { fill: rgba(255,184,0,0.06);  stroke: rgba(255,184,0,0.30); }
+  .province-path.heat-medium  { fill: rgba(255,100,0,0.10);  stroke: rgba(255,100,0,0.40); }
+  .province-path.heat-high    { fill: rgba(255,32,64,0.14);  stroke: rgba(255,32,64,0.50); }
+  .province-path.heat-critical{ fill: rgba(255,32,64,0.22);  stroke: rgba(255,32,64,0.70);
+    filter: drop-shadow(0 0 6px rgba(255,32,64,0.3)); }
+
+  /* ─── PANEL TABS ─── */
+  .panel-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .panel-tab {
+    flex: 1;
+    padding: 9px 4px;
+    font-family: var(--font-mono);
+    font-size: 8px;
+    letter-spacing: 1.5px;
+    text-align: center;
+    cursor: pointer;
+    color: var(--text-muted);
+    border-bottom: 2px solid transparent;
+    transition: all 0.15s;
+    text-transform: uppercase;
+    user-select: none;
+  }
+
+  .panel-tab:hover { color: var(--text-secondary); }
+  .panel-tab.active { color: var(--cyan); border-bottom-color: var(--cyan); }
+
+  /* ─── STATS VIEW ─── */
+  .stats-view { display: none; flex-direction: column; overflow-y: auto; flex: 1;
+    scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+  .stats-view.visible { display: flex; }
+  .detail-content.hidden { display: none; }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .stat-card {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 10px 12px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    opacity: 0.7;
+  }
+
+  .stat-card.red::before   { background: var(--red); }
+  .stat-card.amber::before { background: var(--amber); }
+  .stat-card.cyan::before  { background: var(--cyan); }
+  .stat-card.green::before { background: var(--green); }
+
+  .stat-val {
+    font-family: var(--font-display);
+    font-size: 26px;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 3px;
+  }
+
+  .stat-val.red   { color: var(--red);   text-shadow: 0 0 12px var(--red-glow); }
+  .stat-val.amber { color: var(--amber); }
+  .stat-val.cyan  { color: var(--cyan);  text-shadow: 0 0 10px var(--cyan-glow); }
+  .stat-val.green { color: var(--green); }
+
+  .stat-label {
+    font-family: var(--font-mono);
+    font-size: 8px;
+    color: var(--text-muted);
+    letter-spacing: 1.5px;
+  }
+
+  .stat-sub {
+    font-family: var(--font-mono);
+    font-size: 8px;
+    margin-top: 3px;
+  }
+
+  .trend-up   { color: var(--red); }
+  .trend-down { color: var(--green); }
+  .trend-flat { color: var(--text-muted); }
+
+  /* ─── SPARKLINE ─── */
+  .sparkline-wrap {
+    padding: 10px 16px 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sparkline-label {
+    font-family: var(--font-mono);
+    font-size: 8px;
+    color: var(--text-muted);
+    letter-spacing: 1.5px;
+    margin-bottom: 5px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  /* ─── PROVINCE RANKING ─── */
+  .province-rank-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+
+  .province-rank-item:hover { background: var(--bg-hover); }
+
+  .province-rank-num {
+    font-family: var(--font-display);
+    font-size: 9px;
+    color: var(--text-muted);
+    width: 14px;
+    flex-shrink: 0;
+  }
+
+  .province-rank-name {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--text-primary);
+    flex: 1;
+  }
+
+  .province-rank-bar-wrap {
+    width: 56px;
+    height: 3px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .province-rank-bar {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.5s ease;
+  }
+
+  .province-rank-count {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--text-secondary);
+    width: 20px;
+    text-align: right;
+  }
+
+  .province-rank-hi {
+    font-family: var(--font-mono);
+    font-size: 8px;
+    color: var(--red);
+    width: 18px;
+    text-align: right;
+  }
+
+  /* ─── TARGET TYPES ─── */
+  .target-chips { display: flex; gap: 5px; flex-wrap: wrap; }
+
+  .target-chip {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    padding: 3px 8px;
+    border-radius: 2px;
+    letter-spacing: 0.5px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: var(--text-secondary);
+  }
+
+  /* ─── BOTTOM STATUS ─── */
+  .bottom-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 24px;
+    background: rgba(6,14,26,0.95);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 20px;
+    z-index: 100;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+  }
+
+  .status-item { display: flex; align-items: center; gap: 5px; }
+  .status-dot { width: 4px; height: 4px; border-radius: 50%; }
+  .status-dot.green { background: var(--green); }
+  .status-dot.amber { background: var(--amber); }
+  .status-dot.cyan { background: var(--cyan); }
+
+  #clock { margin-left: auto; color: var(--text-secondary); }
+
+  /* ─── SCROLLING NEWS TICKER ─── */
+  .ticker-wrap {
+    position: absolute;
+    bottom: 24px;
+    left: 0;
+    right: 0;
+    overflow: hidden;
+    height: 28px;
+    background: rgba(2,9,18,0.9);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    z-index: 15;
+  }
+
+  .ticker-label {
+    flex-shrink: 0;
+    padding: 0 12px;
+    font-family: var(--font-display);
+    font-size: 8px;
+    letter-spacing: 2px;
+    color: var(--bg-void);
+    background: var(--red);
+    height: 100%;
+    display: flex;
+    align-items: center;
+    text-transform: uppercase;
+  }
+
+  .ticker-scroll {
+    flex: 1;
+    overflow: hidden;
+    height: 100%;
+    display: flex;
+    align-items: center;
+  }
+
+  .ticker-inner {
+    display: flex;
+    gap: 0;
+    animation: tickerAnim 60s linear infinite;
+    white-space: nowrap;
+  }
+
+  @keyframes tickerAnim {
+    0% { transform: translateX(100%); }
+    100% { transform: translateX(-100%); }
+  }
+
+  .ticker-item {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--text-secondary);
+    padding: 0 28px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .ticker-item::before {
+    content: '◆';
+    color: var(--red);
+    font-size: 6px;
+  }
+
+  /* ─── FILTER BAR UNDER HEADER ─── */
+  .subheader {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 16px;
+    height: 32px;
+    background: rgba(6,14,26,0.8);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════
+     HEADER
+═════════════════════════════════════════════ -->
+<header>
+  <div class="logo-block">
+    <div class="logo-icon">
+      <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="18,2 34,30 2,30" fill="none" stroke="#00c8ff" stroke-width="1.5" opacity="0.6"/>
+        <circle cx="18" cy="18" r="6" fill="none" stroke="#00c8ff" stroke-width="1.5"/>
+        <circle cx="18" cy="18" r="2" fill="#00c8ff"/>
+        <line x1="18" y1="2" x2="18" y2="12" stroke="#00c8ff" stroke-width="1" opacity="0.4"/>
+        <line x1="18" y1="24" x2="18" y2="30" stroke="#00c8ff" stroke-width="1" opacity="0.4"/>
+        <line x1="5" y1="30" x2="12" y2="22" stroke="#00c8ff" stroke-width="1" opacity="0.4"/>
+        <line x1="24" y1="22" x2="31" y2="30" stroke="#00c8ff" stroke-width="1" opacity="0.4"/>
+        <animateTransform attributeName="transform" type="rotate" values="0 18 18;360 18 18" dur="12s" repeatCount="indefinite"/>
+      </svg>
+    </div>
+    <div>
+      <div class="logo-text">NORTH E.Y.E.</div>
+      <span class="logo-sub">ELECTRONIC YIELD EXCHANGE · CANADA CTI</span>
+    </div>
+  </div>
+
+  <div class="header-divider"></div>
+
+  <div class="search-wrap">
+    <span class="search-icon">⌕</span>
+    <input type="text" id="searchInput" placeholder="Search IOC, province, threat tag... (e.g. Quebec Ransomware)">
+  </div>
+
+  <div class="filter-chips">
+    <div class="chip all active" data-filter="all">ALL</div>
+    <div class="chip cyber" data-filter="cyber">CYBER</div>
+    <div class="chip fincrime" data-filter="fincrime">FINCRIME</div>
+    <div class="chip" data-filter="social" style="border-color:rgba(231,233,234,0.2);color:#8899aa;">𝕏 SIGNAL</div>
+  </div>
+
+  <div class="header-divider"></div>
+
+  <div class="header-stats">
+    <div class="hstat">
+      <span class="hstat-val red" id="totalThreats">0</span>
+      <span class="hstat-label">ACTIVE</span>
+    </div>
+    <div class="hstat">
+      <span class="hstat-val amber" id="cyberCount">0</span>
+      <span class="hstat-label">CYBER</span>
+    </div>
+    <div class="hstat">
+      <span class="hstat-val cyan" id="fincrimeCount">0</span>
+      <span class="hstat-label">FINCRIME</span>
+    </div>
+  </div>
+
+  <div class="header-divider"></div>
+  <div class="live-indicator"><div class="live-dot"></div>LIVE FEED</div>
+</header>
+
+<!-- ════════════════════════════════════════════
+     MAIN GRID
+═════════════════════════════════════════════ -->
+<div class="main-grid" style="padding-bottom: 52px;">
+
+  <!-- ── LEFT SIDEBAR ── -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <span class="sidebar-title">Threat Feed</span>
+      <span class="feed-count" id="feedCount">0 events</span>
+    </div>
+    <div class="threat-feed" id="threatFeed"></div>
+  </div>
+
+  <!-- ── MAP ── -->
+  <div class="map-area">
+    <div class="map-bg"></div>
+    <div class="map-timestamp" id="mapTimestamp">LAST UPDATED: —</div>
+
+    <svg id="canada-map" viewBox="0 0 900 560" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+      <!-- ── PROVINCE OUTLINES (Simplified) ── -->
+      <!-- Yukon -->
+      <polygon class="province-path" points="40,90 160,90 175,140 160,190 40,190"/>
+      <text class="province-label" x="100" y="145">YT</text>
+
+      <!-- Northwest Territories -->
+      <polygon class="province-path" points="165,90 350,90 350,50 620,50 620,100 440,100 440,190 160,190 175,140"/>
+      <text class="province-label" x="300" y="130">NT</text>
+
+      <!-- Nunavut -->
+      <polygon class="province-path" points="350,50 620,50 680,30 770,50 800,100 740,160 680,180 620,160 560,180 500,160 440,100 350,90"/>
+      <text class="province-label" x="580" y="100">NU</text>
+
+      <!-- British Columbia -->
+      <polygon class="province-path" points="40,190 175,190 175,210 155,390 110,420 60,400 40,350"/>
+      <text class="province-label" x="105" y="310">BC</text>
+
+      <!-- Alberta -->
+      <polygon class="province-path" points="178,190 248,190 248,390 160,390 155,390 175,210"/>
+      <text class="province-label" x="210" y="300">AB</text>
+
+      <!-- Saskatchewan -->
+      <polygon class="province-path" points="250,190 318,190 318,390 250,390"/>
+      <text class="province-label" x="284" y="300">SK</text>
+
+      <!-- Manitoba -->
+      <polygon class="province-path" points="320,190 388,180 400,220 395,390 320,390"/>
+      <text class="province-label" x="356" y="300">MB</text>
+
+      <!-- Ontario -->
+      <polygon class="province-path" points="400,220 440,190 500,200 540,240 530,300 490,360 450,400 410,420 400,380 395,390 400,220"/>
+      <text class="province-label" x="462" y="320">ON</text>
+
+      <!-- Quebec -->
+      <polygon class="province-path" points="440,190 620,160 680,180 700,240 680,310 620,360 560,380 530,300 540,240 500,200"/>
+      <text class="province-label" x="580" y="270">QC</text>
+
+      <!-- New Brunswick -->
+      <polygon class="province-path" points="650,330 700,320 720,360 700,390 650,390"/>
+      <text class="province-label" x="682" y="362">NB</text>
+
+      <!-- Nova Scotia -->
+      <polygon class="province-path" points="690,390 750,380 770,420 720,440 690,420"/>
+      <text class="province-label" x="728" y="415">NS</text>
+
+      <!-- PEI (tiny) -->
+      <polygon class="province-path" points="730,350 760,345 762,360 732,362"/>
+      <text class="province-label" x="746" y="358" font-size="7">PEI</text>
+
+      <!-- Newfoundland + Labrador -->
+      <polygon class="province-path" points="680,180 770,160 820,200 840,250 800,290 750,310 700,290 680,240"/>
+      <!-- Newfoundland island -->
+      <polygon class="province-path" points="800,290 850,290 860,330 830,360 790,350 780,320"/>
+      <text class="province-label" x="770" y="250">NL</text>
+
+      <!-- Great Lakes indicator -->
+      <ellipse cx="455" cy="360" rx="18" ry="10" fill="rgba(0,150,255,0.12)" stroke="rgba(0,200,255,0.2)" stroke-width="0.5" opacity="0.7"/>
+      <ellipse cx="432" cy="340" rx="10" ry="6" fill="rgba(0,150,255,0.1)" stroke="rgba(0,200,255,0.15)" stroke-width="0.5" opacity="0.6"/>
+
+      <!-- Lat/lon grid lines (subtle) -->
+      <line x1="0" y1="280" x2="900" y2="280" stroke="rgba(0,200,255,0.04)" stroke-width="1" stroke-dasharray="4,8"/>
+      <line x1="0" y1="180" x2="900" y2="180" stroke="rgba(0,200,255,0.04)" stroke-width="1" stroke-dasharray="4,8"/>
+      <line x1="200" y1="0" x2="200" y2="560" stroke="rgba(0,200,255,0.04)" stroke-width="1" stroke-dasharray="4,8"/>
+      <line x1="450" y1="0" x2="450" y2="560" stroke="rgba(0,200,255,0.04)" stroke-width="1" stroke-dasharray="4,8"/>
+      <line x1="650" y1="0" x2="650" y2="560" stroke="rgba(0,200,255,0.04)" stroke-width="1" stroke-dasharray="4,8"/>
+    </svg>
+
+    <!-- Threat dots injected by JS -->
+    <div id="threatDots" style="position:absolute;inset:0;pointer-events:none;z-index:10;"></div>
+
+    <!-- Tooltip -->
+    <div class="map-tooltip" id="mapTooltip"></div>
+
+    <!-- Legend -->
+    <div class="map-legend">
+      <div class="legend-title">THREAT TYPE</div>
+      <div class="legend-item"><div class="legend-dot cyber"></div>CYBER ATTACK</div>
+      <div class="legend-item"><div class="legend-dot fincrime"></div>FINANCIAL CRIME</div>
+      <div style="margin-top:10px;border-top:1px solid var(--border);padding-top:8px;">
+        <div class="legend-title" style="margin-bottom:6px;">𝕏 WATCHLIST</div>
+        <div id="watchlistMini" style="display:flex;flex-direction:column;gap:2px;"></div>
+      </div>
+    </div>
+
+    <!-- News ticker -->
+    <div class="ticker-wrap">
+      <div class="ticker-label">LIVE</div>
+      <div class="ticker-scroll">
+        <div class="ticker-inner" id="tickerInner"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── RIGHT PANEL — TABBED ── -->
+  <div class="detail-panel">
+    <div class="detail-header">
+      <div class="detail-title-row">
+        <span class="detail-panel-label">INTELLIGENCE</span>
+        <span class="detail-id" id="detailId">—</span>
+      </div>
+    </div>
+    <!-- Tabs -->
+    <div class="panel-tabs">
+      <div class="panel-tab active" data-tab="intel">⬡ EVENT INTEL</div>
+      <div class="panel-tab" data-tab="stats">◈ PROVINCE STATS</div>
+      <div class="panel-tab" data-tab="sources">𝕏 SOURCES</div>
+    </div>
+    <!-- Event Intel content -->
+    <div class="detail-content" id="detailContent">
+      <div class="detail-empty">
+        <div class="detail-empty-icon">◈</div>
+        <div class="detail-empty-text">SELECT A THREAT EVENT<br>TO VIEW INTELLIGENCE</div>
+      </div>
+    </div>
+    <!-- Province Stats content -->
+    <div class="stats-view" id="statsView"></div>
+    <!-- Sources content -->
+    <div class="stats-view" id="sourcesView"></div>
+  </div>
+
+</div>
+
+<!-- ════════════════════════════════════════════
+     STATUS BAR
+═════════════════════════════════════════════ -->
+<div class="bottom-bar">
+  <div class="status-item"><div class="status-dot green"></div>GITHUB ACTIONS: ACTIVE</div>
+  <div class="status-item"><div class="status-dot cyan"></div>AI COUNCIL: ONLINE</div>
+  <div class="status-item"><div class="status-dot cyan"></div>OSINT FEEDS: 9/9</div>
+  <div class="status-item"><div class="status-dot green"></div>𝕏 WATCHLIST: <span id="xWatchCount">22 ACCOUNTS</span></div>
+  <div class="status-item"><div class="status-dot amber"></div>NEXT SYNC: <span id="nextSync">—</span></div>
+  <span id="clock"></span>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+// X / SOCIAL WATCHLIST (curated accounts)
+// ══════════════════════════════════════════════
+const X_WATCHLIST = [
+  // ── Crypto / FinCrime Intel ──
+  { handle: "zachxbt",        name: "ZachXBT",                  category: "Crypto Investigator",   type: "x",        active: true,  signal_count: 14 },
+  { handle: "chainalysis",    name: "Chainalysis",               category: "Blockchain Analytics",  type: "x",        active: true,  signal_count: 7  },
+  { handle: "elliptic",       name: "Elliptic",                  category: "Crypto Intelligence",   type: "x",        active: true,  signal_count: 3  },
+  { handle: "trmlabs",        name: "TRM Labs",                  category: "Crypto Compliance",     type: "x",        active: true,  signal_count: 2  },
+  // ── Canadian Government ──
+  { handle: "CybercentreCA",  name: "Cdn Centre for Cyber Sec.", category: "CCCS (Federal)",        type: "gov",      active: true,  signal_count: 19 },
+  { handle: "CAFC_ACFC",      name: "Canadian Anti-Fraud Ctr",  category: "CAFC (Federal)",        type: "gov",      active: true,  signal_count: 11 },
+  { handle: "PublicSafetyCA", name: "Public Safety Canada",      category: "Gov / Policy",          type: "gov",      active: true,  signal_count: 6  },
+  { handle: "FINTRAC_Canada", name: "FINTRAC",                   category: "Financial Intel (Fed)", type: "gov",      active: true,  signal_count: 8  },
+  { handle: "cirnac_cirnac",  name: "CSE Canada",                category: "Signals Intelligence", type: "gov",      active: true,  signal_count: 4  },
+  // ── Canadian Police ──
+  { handle: "rcmpgrc",        name: "RCMP National",             category: "Federal Police",        type: "police",   active: true,  signal_count: 22 },
+  { handle: "OPP_News",       name: "Ontario Prov. Police",      category: "Provincial Police",     type: "police",   active: true,  signal_count: 9  },
+  { handle: "SureteDuQuebec", name: "Sûreté du Québec",         category: "Provincial Police",     type: "police",   active: true,  signal_count: 7  },
+  { handle: "VancouverPD",    name: "Vancouver Police Dept.",    category: "Municipal Police",      type: "police",   active: true,  signal_count: 5  },
+  { handle: "TorontoPolice",  name: "Toronto Police Service",    category: "Municipal Police",      type: "police",   active: true,  signal_count: 12 },
+  { handle: "calgarypolice",  name: "Calgary Police Service",    category: "Municipal Police",      type: "police",   active: false, signal_count: 3  },
+  { handle: "edmontonpolice", name: "Edmonton Police Service",   category: "Municipal Police",      type: "police",   active: true,  signal_count: 4  },
+  // ── Canadian Cybersecurity Professionals ──
+  { handle: "MalwareMustDie",  name: "MalwareMustDie!",          category: "Threat Research",       type: "osint",    active: true,  signal_count: 8  },
+  { handle: "threatpost",      name: "Threatpost",                category: "Cyber News",            type: "osint",    active: true,  signal_count: 11 },
+  { handle: "BleepinComputer", name: "BleepingComputer",          category: "Cyber News / IOCs",     type: "osint",    active: true,  signal_count: 17 },
+  { handle: "vxunderground",   name: "vx-underground",            category: "Malware Archive / IOC", type: "osint",    active: true,  signal_count: 9  },
+  { handle: "GossiTheDog",     name: "Kevin Beaumont",            category: "Threat Intel (CA/UK)",  type: "osint",    active: true,  signal_count: 6  },
+  { handle: "sansforensics",   name: "SANS Institute",            category: "Threat Education",      type: "osint",    active: true,  signal_count: 4  },
+];
+
+// ══════════════════════════════════════════════
+// THREAT DATA (threats.json simulation)
+// ══════════════════════════════════════════════
+const THREATS = [
+  {
+    id: "NEY-2025-001",
+    category: "cyber",
+    subcategory: "Ransomware",
+    tags: ["ransomware", "data-exfiltration", "double-extortion"],
+    title: "BlackSuit Ransomware Targets Ontario Hospital Network",
+    province: "Ontario",
+    target_types: ["Government", "Healthcare"],
+    severity: "high",
+    iocs: [
+      { type: "IP", val: "185.220.101.47" },
+      { type: "DOMAIN", val: "blacksuit-data.onion" },
+      { type: "HASH", val: "a3f8c1e2d94b7f56aa0c..." }
+    ],
+    ioas: ["RDP bruteforce", "Lateral movement via PsExec"],
+    summary: "A BlackSuit ransomware variant has been deployed against a regional hospital network in Southern Ontario. Initial access was achieved via exposed RDP credentials. Threat actors exfiltrated 48GB of patient records prior to encryption, demanding $2.3M CAD in Monero.",
+    council: { gemini: true, gpt4o: true, claude: true },
+    timestamp: "2025-07-14T08:22:00Z",
+    source: "CCCS / AlienVault OTX",
+    signal_sources: [
+      { type: "gov", handle: "CybercentreCA", name: "Canadian Centre for Cyber Security", verified: true, time: "2h ago", text: "CCCS is aware of a ransomware incident affecting healthcare infrastructure in Ontario. Advisory AV25-1401 issued. Organizations should review RDP exposure and apply emergency patch MS25-0047. #CyberAlert #Canada", signal_url: "https://twitter.com/CybercentreCA" },
+      { type: "osint", handle: "BleepinComputer", name: "BleepingComputer", verified: true, time: "3h ago", text: "BlackSuit ransomware hits Canadian hospital — 48GB of patient data stolen before encryption. Attackers demanded $2.3M CAD in Monero. IOCs posted below. IOC: 185.220.101.47 | Hash: a3f8c1e2... #ransomware #canada", signal_url: "https://twitter.com/BleepinComputer" },
+      { type: "police", handle: "OPP_News", name: "OPP — Ontario Prov. Police", verified: true, time: "5h ago", text: "The OPP Cyber Crime Unit is assisting in an active investigation involving a ransomware attack on a Southern Ontario healthcare facility. If your organization receives suspicious communications please contact @CybercentreCA.", signal_url: "https://twitter.com/OPP_News" }
+    ],
+    mapPos: { x: 440, y: 340 }
+  },
+  {
+    id: "NEY-2025-002",
+    category: "fincrime",
+    subcategory: "Money Laundering",
+    tags: ["money-laundering", "crypto-crime", "shell-companies"],
+    title: "CRA-Linked Shell Company Network Launders $18M Via DeFi",
+    province: "British Columbia",
+    target_types: ["Businesses", "Government"],
+    severity: "high",
+    iocs: [
+      { type: "WALLET", val: "0x3fA9c2E...8D1a" },
+      { type: "DOMAIN", val: "bccorp-holdings.ca" }
+    ],
+    ioas: ["Layering via Tornado Cash forks", "Smurfing via e-transfers"],
+    summary: "FINTRAC and RCMP identified a sophisticated laundering network operating across 14 shell companies registered in BC. Approximately $18M CAD moved through DeFi mixing protocols over 6 months. Funds ultimately converted to real estate in Metro Vancouver.",
+    council: { gemini: true, gpt4o: true, claude: false },
+    timestamp: "2025-07-13T16:45:00Z",
+    source: "FINTRAC / Blockchain Analytics",
+    signal_sources: [
+      { type: "x", handle: "zachxbt", name: "ZachXBT", verified: true, time: "1d ago", text: "Traced $18M from a BC-registered network through 3 hops: Tornado Cash fork → 2 intermediary wallets → final settlement on a regulated CEX. Canadian shell cos used as legal veneer. 0x3fA9c2E...8D1a is a flagged mixing wallet 🧵", signal_url: "https://twitter.com/zachxbt" },
+      { type: "gov", handle: "FINTRAC_Canada", name: "FINTRAC Canada", verified: true, time: "2d ago", text: "FINTRAC has issued a Financial Intelligence Assessment relating to virtual currency misuse for trade-based money laundering in British Columbia. Organizations should reference FINTRAC FINTRAC-AML-BC-2025-07.", signal_url: "https://twitter.com/FINTRAC_Canada" },
+      { type: "police", handle: "rcmpgrc", name: "RCMP", verified: true, time: "2d ago", text: "The @RCMPBC Federal Serious and Organized Crime unit has executed search warrants as part of Project DEEPWATER, targeting a sophisticated virtual currency laundering operation. 3 individuals facing charges.", signal_url: "https://twitter.com/rcmpgrc" }
+    ],
+    mapPos: { x: 108, y: 310 }
+  },
+  {
+    id: "NEY-2025-003",
+    category: "cyber",
+    subcategory: "DDoS",
+    tags: ["ddos", "hacktivism", "botnet"],
+    title: "Pro-Russian Hacktivist DDoS Campaign Against Federal Infrastructure",
+    province: "Quebec",
+    target_types: ["Government"],
+    severity: "medium",
+    iocs: [
+      { type: "IP", val: "194.165.16.5" },
+      { type: "IP", val: "45.155.205.233" },
+      { type: "BOTNET", val: "Mirai-QBot variant" }
+    ],
+    ioas: ["UDP flood >340 Gbps", "DNS amplification"],
+    summary: "NoName057(16) coordinated a multi-vector DDoS campaign targeting federal government websites in Quebec. Peak traffic reached 340 Gbps via a Mirai-based botnet. Service disruptions lasted 4.2 hours before Cloudflare mitigation was effective.",
+    council: { gemini: true, gpt4o: false, claude: true },
+    timestamp: "2025-07-13T11:30:00Z",
+    source: "CCCS Alert / Shadowserver",
+    signal_sources: [
+      { type: "osint", handle: "GossiTheDog", name: "Kevin Beaumont", verified: true, time: "1d ago", text: "NoName057(16) announced on Telegram they were targeting Canadian federal infrastructure today. Quebec-based GOC sites are going down intermittently. UDP flood + DNS amp, peak looks like 340Gbps. Mirai botnet variant confirmed.", signal_url: "https://twitter.com/GossiTheDog" },
+      { type: "gov", handle: "CybercentreCA", name: "Cdn. Centre for Cyber Security", verified: true, time: "1d ago", text: "CCCS is monitoring an ongoing DDoS campaign by a hacktivist threat group against Government of Canada online services. Mitigation is underway. Operational continuity is not impacted. #DDoS #CyberAlert", signal_url: "https://twitter.com/CybercentreCA" }
+    ],
+    mapPos: { x: 555, y: 260 }
+  },
+  {
+    id: "NEY-2025-004",
+    category: "fincrime",
+    subcategory: "Elder Abuse",
+    tags: ["elder-abuse", "scams", "phone-fraud", "gift-cards"],
+    title: "Grandparent Scam Ring Targets Ontario & Quebec Seniors — $3.2M Lost",
+    province: "Ontario",
+    target_types: ["Individuals"],
+    severity: "high",
+    iocs: [
+      { type: "PHONE", val: "+1-647-555-0183" },
+      { type: "PHONE", val: "+1-514-555-0297" },
+      { type: "DOMAIN", val: "rcmp-urgent-release.com" }
+    ],
+    ioas: ["Impersonation of RCMP/lawyers", "Gift card payment demand"],
+    summary: "An organized crime ring operating primarily from Montreal has victimized 847 seniors across Ontario and Quebec using 'grandparent scam' methodology. Callers impersonate RCMP officers and family members demanding bail payment via Amazon/iTunes gift cards. Total losses exceed $3.2M CAD since January.",
+    council: { gemini: true, gpt4o: true, claude: true },
+    timestamp: "2025-07-12T09:15:00Z",
+    source: "CAFC / RCMP",
+    signal_sources: [
+      { type: "gov", handle: "CAFC_ACFC", name: "Canadian Anti-Fraud Centre", verified: true, time: "2d ago", text: "⚠️ FRAUD ALERT: The Grandparent Scam is surging across ON and QC. Fraudsters call seniors pretending to be a grandchild in crisis + a fake RCMP officer demanding gift cards. 847 victims, $3.2M lost since Jan. DO NOT send gift cards. Report to 1-888-495-8501. #FraudAlert 🍁", signal_url: "https://twitter.com/CAFC_ACFC" },
+      { type: "police", handle: "TorontoPolice", name: "Toronto Police Service", verified: true, time: "3d ago", text: "TPS Financial Crimes Unit: We have made 4 arrests in connection with a large-scale grandparent fraud ring targeting seniors in Toronto and the GTA. Investigation ongoing. If you or a loved one has been targeted, call 416-808-2222.", signal_url: "https://twitter.com/TorontoPolice" },
+      { type: "police", handle: "SureteDuQuebec", name: "Sûreté du Québec", verified: true, time: "3d ago", text: "La SQ a procédé à des arrestations en lien avec un réseau de fraude ciblant des aînés au Québec. Méfiez-vous des appels demandant des cartes-cadeaux. Signalez au @CAFC_ACFC. #FraudeSenior", signal_url: "https://twitter.com/SureteDuQuebec" }
+    ],
+    mapPos: { x: 470, y: 360 }
+  },
+  {
+    id: "NEY-2025-005",
+    category: "cyber",
+    subcategory: "Phishing Campaign",
+    tags: ["phishing", "business-email-compromise", "credential-harvesting"],
+    title: "Large-Scale .CA Domain Phishing Campaign Impersonating CRA",
+    province: "Alberta",
+    target_types: ["Individuals", "Businesses"],
+    severity: "medium",
+    iocs: [
+      { type: "DOMAIN", val: "cra-refund-ca.net" },
+      { type: "DOMAIN", val: "canada-revenue-alert.ca" },
+      { type: "IP", val: "23.106.124.20" },
+      { type: "HASH", val: "e5f7a901bc23d456ef78..." }
+    ],
+    ioas: ["Typosquatting .ca TLDs", "Credential phishing portals"],
+    summary: "A coordinated phishing campaign spanning 23 fraudulent .CA-adjacent domains is impersonating the Canada Revenue Agency. Targets receive SMS/email about 'outstanding refunds' and are directed to convincing fake CRA portals harvesting SIN numbers and banking credentials. 12,000+ Canadians affected.",
+    council: { gemini: false, gpt4o: true, claude: true },
+    timestamp: "2025-07-12T14:00:00Z",
+    source: "CRTC / AlienVault",
+    signal_sources: [
+      { type: "osint", handle: "BleepinComputer", name: "BleepingComputer", verified: true, time: "2d ago", text: "Massive CRA phishing campaign hits Canada: 23 fake .ca-lookalike domains harvest SINs + banking creds. Domains include cra-refund-ca.net and canada-revenue-alert.ca. IOC list in thread. 12,000+ victims estimated. #phishing #canada #CRA", signal_url: "https://twitter.com/BleepinComputer" },
+      { type: "gov", handle: "CAFC_ACFC", name: "Canadian Anti-Fraud Centre", verified: true, time: "2d ago", text: "The CRA does NOT send unsolicited emails or texts about refunds. Fraudsters are using fake .ca domains. Do NOT click links claiming to be from CRA. Forward suspicious messages to phishing@cra-arc.gc.ca #ScamAlert", signal_url: "https://twitter.com/CAFC_ACFC" }
+    ],
+    mapPos: { x: 210, y: 300 }
+  },
+  {
+    id: "NEY-2025-006",
+    category: "cyber",
+    subcategory: "Data Breach",
+    tags: ["data-breach", "large-data-leak", "canadian-tld", "pii-exposure"],
+    title: "Major Canadian Retailer Breach — 4.1M Customer Records on Dark Web",
+    province: "Manitoba",
+    target_types: ["Businesses", "Individuals"],
+    severity: "high",
+    iocs: [
+      { type: "DOMAIN", val: "breach-ca-db.onion" },
+      { type: "HASH", val: "9d4c2f18e30b765a1c44..." }
+    ],
+    ioas: ["SQL injection on legacy .CA portal", "Data listing on BreachForums"],
+    summary: "A major Canadian retail chain operating in Manitoba and Saskatchewan suffered a database breach exposing 4.1 million customer records including names, SINs, credit card partial data, and loyalty points. Data appeared on a dark web forum priced at $12,000 USD. Breach persisted undetected for 74 days.",
+    council: { gemini: true, gpt4o: true, claude: true },
+    timestamp: "2025-07-11T18:30:00Z",
+    source: "HaveIBeenPwned / DarkOwl",
+    signal_sources: [
+      { type: "x", handle: "vxunderground", name: "vx-underground", verified: true, time: "3d ago", text: "A threat actor posted a database allegedly belonging to a major Canadian retailer on BreachForums. Claimed 4.1M records. Includes full name, partial CC, SIN, loyalty data. Sample verified. Appears legitimate. Hash: 9d4c2f18...", signal_url: "https://twitter.com/vxunderground" },
+      { type: "osint", handle: "GossiTheDog", name: "Kevin Beaumont", verified: true, time: "3d ago", text: "The Canadian retailer breach is real. SQL injection on a legacy .ca e-commerce portal that hadn't been patched since 2021. 74-day dwell time. If you shopped there since April, assume your details are compromised.", signal_url: "https://twitter.com/GossiTheDog" }
+    ],
+    mapPos: { x: 350, y: 300 }
+  },
+  {
+    id: "NEY-2025-007",
+    category: "fincrime",
+    subcategory: "Banking Malware",
+    tags: ["banking-malware", "credential-theft", "mobile-banking"],
+    title: "Android Banking Trojan 'MapleRAT' Targets Big Six Banks",
+    province: "British Columbia",
+    target_types: ["Individuals"],
+    severity: "high",
+    iocs: [
+      { type: "HASH", val: "b2e44f9a17dc8301fcb5..." },
+      { type: "DOMAIN", val: "ca-banking-update.apk.io" },
+      { type: "IP", val: "91.234.99.10" }
+    ],
+    ioas: ["Overlay attack on RBC/TD/BMO apps", "SMS OTP interception"],
+    summary: "A previously undocumented Android trojan dubbed 'MapleRAT' is propagating via fraudulent Google Play listings and SMS lure campaigns. The malware deploys overlay attacks against all six major Canadian bank apps, intercepts SMS-based OTPs, and exfiltrates credentials to a C2 server in Eastern Europe.",
+    council: { gemini: true, gpt4o: true, claude: true },
+    timestamp: "2025-07-11T10:00:00Z",
+    source: "CCCS / ThreatFabric",
+    signal_sources: [
+      { type: "x", handle: "MalwareMustDie", name: "MalwareMustDie!", verified: false, time: "3d ago", text: "New Canadian-targeted Android banking trojan — calling it MapleRAT. Overlay attacks on all Big6 CA bank apps. SMS OTP interception. C2: 91.234.99.10 (Eastern Europe). IOC dump: b2e44f9a... DO NOT install 'RBC Security Update' from unofficial sources. 🧵1/8", signal_url: "https://twitter.com/MalwareMustDie" },
+      { type: "gov", handle: "CybercentreCA", name: "Cdn. Centre for Cyber Security", verified: true, time: "4d ago", text: "CCCS is aware of a new Android malware targeting customers of major Canadian financial institutions. Do not install banking apps from sources other than official app stores. Contact your bank if you believe you are affected. #MobileSecurity", signal_url: "https://twitter.com/CybercentreCA" }
+    ],
+    mapPos: { x: 95, y: 350 }
+  },
+  {
+    id: "NEY-2025-008",
+    category: "cyber",
+    subcategory: "AI Attack",
+    tags: ["ai-attack", "deepfake", "business-email-compromise"],
+    title: "AI-Generated CEO Deepfake Enables $4.8M BEC Fraud",
+    province: "Ontario",
+    target_types: ["Businesses"],
+    severity: "high",
+    iocs: [
+      { type: "EMAIL", val: "ceo-secure@corpcomms-ca.net" },
+      { type: "DOMAIN", val: "corpcomms-ca.net" }
+    ],
+    ioas: ["Voice deepfake in video call", "Wire transfer to Dubai intermediary"],
+    summary: "A sophisticated Business Email Compromise attack leveraged AI-generated video deepfakes of a Toronto-based mining company CEO to authorize a $4.8M CAD fraudulent wire transfer. The CFO participated in a 12-minute video call with the synthetic CEO before executing the transfer. Funds routed through UAE.",
+    council: { gemini: true, gpt4o: false, claude: true },
+    timestamp: "2025-07-10T15:20:00Z",
+    source: "CAFC / Victim Report",
+    signal_sources: [
+      { type: "gov", handle: "CAFC_ACFC", name: "Canadian Anti-Fraud Centre", verified: true, time: "4d ago", text: "⚠️ NEW THREAT: AI deepfake video BEC fraud has arrived in Canada. A Toronto firm lost $4.8M CAD after their CFO was deceived by a synthetic video call impersonating the CEO. Verify ALL wire transfer requests via a known phone number — not reply contact info. #BEC #DeepfakeFraud", signal_url: "https://twitter.com/CAFC_ACFC" },
+      { type: "x", handle: "GossiTheDog", name: "Kevin Beaumont", verified: true, time: "4d ago", text: "The Canadian deepfake CEO BEC case is a turning point. 12-minute video call, totally convincing synthetic video, $4.8M gone. The 'call your CEO to verify' defense is now broken too if attackers have video deepfakes. Finance teams need new verification protocols.", signal_url: "https://twitter.com/GossiTheDog" }
+    ],
+    mapPos: { x: 415, y: 310 }
+  },
+  {
+    id: "NEY-2025-009",
+    category: "fincrime",
+    subcategory: "Crypto Crime",
+    tags: ["crypto-crime", "rug-pull", "defi", "investment-fraud"],
+    title: "Canadian DeFi 'MapleFi' Project Rug Pull — $22M Vanished",
+    province: "Quebec",
+    target_types: ["Individuals"],
+    severity: "medium",
+    iocs: [
+      { type: "WALLET", val: "0x8Ba1...f3E2" },
+      { type: "DOMAIN", val: "maplefinance.io" }
+    ],
+    ioas: ["Liquidity pool drainage", "Team wallet anonymization via Tornado Cash"],
+    summary: "The MapleFi decentralized finance project, marketed heavily to Canadian retail investors via Quebec-based social media influencers, executed a rug pull removing $22M USD in liquidity. The development team anonymized wallets through mixing services before project collapse. OSC has opened an investigation.",
+    council: { gemini: false, gpt4o: true, claude: true },
+    timestamp: "2025-07-10T08:00:00Z",
+    source: "OSC / Blockchain Analytics",
+    signal_sources: [
+      { type: "x", handle: "zachxbt", name: "ZachXBT", verified: true, time: "4d ago", text: "THREAD: MapleFi rug pull — $22M gone 🇨🇦 Traced dev wallets: 0x8Ba1...f3E2 drained the LP at 3:14am UTC. Funds split across 4 wallets → Tornado Cash → dormant. Team was Quebec-based based on KYC leaks from their prior project. OSC should subpoena the CEX they used. 1/12 🧵", signal_url: "https://twitter.com/zachxbt" },
+      { type: "x", handle: "chainalysis", name: "Chainalysis", verified: true, time: "5d ago", text: "Chainalysis has traced the MapleFi rug pull funds through a mixing pattern consistent with previous Canadian DeFi exit scams. Report filed with FINTRAC and OSC. Reactor link in thread. #rugpull #defi #canada", signal_url: "https://twitter.com/chainalysis" }
+    ],
+    mapPos: { x: 530, y: 290 }
+  },
+  {
+    id: "NEY-2025-010",
+    category: "cyber",
+    subcategory: "Ransomware",
+    tags: ["ransomware", "critical-infrastructure", "ics-scada"],
+    title: "ICS-Targeted Ransomware Disrupts Saskatchewan Energy Utility",
+    province: "Saskatchewan",
+    target_types: ["Government", "Businesses"],
+    severity: "high",
+    iocs: [
+      { type: "IP", val: "176.111.174.26" },
+      { type: "HASH", val: "c7d9e3f0a15b8426dc91..." }
+    ],
+    ioas: ["Phishing → VPN compromise → Pivoting to OT network", "SCADA workstation encryption"],
+    summary: "A ransomware group with suspected state-nexus compromised SCADA systems at a Saskatchewan provincial energy utility. OT network isolation prevented grid disruption but operational recovery required 9 days. The incident triggered CCCS Critical Infrastructure Notification Protocol Level 2.",
+    council: { gemini: true, gpt4o: true, claude: true },
+    timestamp: "2025-07-09T06:45:00Z",
+    source: "CCCS / ICS-CERT Canada",
+    signal_sources: [
+      { type: "gov", handle: "CybercentreCA", name: "Cdn. Centre for Cyber Security", verified: true, time: "5d ago", text: "CCCS has activated Critical Infrastructure Notification Protocol in response to a cyber incident affecting energy sector OT systems in Saskatchewan. Organizations with exposed ICS/SCADA should immediately review CCCS hardening guide ITSAP.00.082. #CriticalInfrastructure", signal_url: "https://twitter.com/CybercentreCA" },
+      { type: "gov", handle: "PublicSafetyCA", name: "Public Safety Canada", verified: true, time: "5d ago", text: "Public Safety Canada is coordinating the federal response to a ransomware incident affecting energy infrastructure in Saskatchewan. The National Cyber Security Centre and RCMP are engaged. There is no current risk to public safety.", signal_url: "https://twitter.com/PublicSafetyCA" },
+      { type: "osint", handle: "MalwareMustDie", name: "MalwareMustDie!", verified: false, time: "6d ago", text: "Saskatchewan energy utility hit. SCADA systems encrypted. VPN gateway 176.111.174.26 was the initial entry point — Fortinet VPN with unpatched CVE-2024-21762. This is state-sponsored behavior, OT pivot was too clean. Hash: c7d9e3f0... #ICS #SCADA #Canada", signal_url: "https://twitter.com/MalwareMustDie" }
+    ],
+    mapPos: { x: 272, y: 290 }
+  },
+  {
+    id: "NEY-2025-011",
+    category: "fincrime",
+    subcategory: "Cyber Fraud",
+    tags: ["cyber-fraud", "investment-scam", "romance-scam", "pig-butchering"],
+    title: "'Pig Butchering' Investment Scam Ring Extracts $7M from Atlantic Canadians",
+    province: "Nova Scotia",
+    target_types: ["Individuals"],
+    severity: "medium",
+    iocs: [
+      { type: "DOMAIN", val: "canadiantrade-pro.com" },
+      { type: "PHONE", val: "+1-902-555-0341" }
+    ],
+    ioas: ["Romance lure via dating apps", "Fake crypto trading platform"],
+    summary: "An extensive 'pig butchering' scam operation targeting residents of Nova Scotia and New Brunswick has extracted approximately $7M CAD from 134 victims. Operators cultivate romantic relationships over months before introducing fake cryptocurrency investment platforms showing fabricated returns.",
+    council: { gemini: true, gpt4o: true, claude: false },
+    timestamp: "2025-07-08T12:00:00Z",
+    source: "CAFC / NS RCMP",
+    signal_sources: [
+      { type: "gov", handle: "CAFC_ACFC", name: "Canadian Anti-Fraud Centre", verified: true, time: "6d ago", text: "Pig butchering investment fraud is surging in Atlantic Canada. 134 victims, $7M CAD lost in NS and NB. Scammers meet victims on dating apps, build relationships over weeks, then introduce fake crypto trading platforms. Report at 1-888-495-8501. #PigButchering #ScamAlert 🍁", signal_url: "https://twitter.com/CAFC_ACFC" },
+      { type: "police", handle: "rcmpgrc", name: "RCMP", verified: true, time: "6d ago", text: "RCMP 'H' Division (NS) and 'J' Division (NB) are jointly investigating a sophisticated investment fraud network targeting Atlantic Canadians. 134 victims have come forward. If you've been victimized, please contact your local RCMP detachment.", signal_url: "https://twitter.com/rcmpgrc" }
+    ],
+    mapPos: { x: 700, y: 410 }
+  },
+  {
+    id: "NEY-2025-012",
+    category: "cyber",
+    subcategory: "Data Breach",
+    tags: ["data-breach", "supply-chain", "third-party-vendor"],
+    title: "Federal Government Supply Chain Breach Via Managed IT Provider",
+    province: "Ontario",
+    target_types: ["Government"],
+    severity: "high",
+    iocs: [
+      { type: "DOMAIN", val: "govtech-ca-support.com" },
+      { type: "IP", val: "162.33.178.9" },
+      { type: "HASH", val: "d1a78c5e20f934b61e82..." }
+    ],
+    ioas: ["SolarWinds-style DLL injection", "Living-off-the-land (LOL) techniques"],
+    summary: "A sophisticated threat actor, assessed with high confidence as APT29 (Cozy Bear), compromised a federal government IT managed services provider. Malicious code injected into routine software updates granted persistent access to 14 Government of Canada networks. TBS and CSE are coordinating response.",
+    council: { gemini: true, gpt4o: true, claude: true },
+    timestamp: "2025-07-07T20:00:00Z",
+    source: "CSE / CISA Advisory",
+    signal_sources: [
+      { type: "gov", handle: "CybercentreCA", name: "Cdn. Centre for Cyber Security", verified: true, time: "7d ago", text: "CCCS has issued Alert AV25-1394 regarding a supply chain compromise affecting a managed IT service provider serving Government of Canada clients. Organizations should treat the associated software update as malicious pending forensic review. IOCs in advisory. #SupplyChain #APT", signal_url: "https://twitter.com/CybercentreCA" },
+      { type: "gov", handle: "PublicSafetyCA", name: "Public Safety Canada", verified: true, time: "7d ago", text: "Government of Canada is responding to a sophisticated cyber intrusion involving a federal IT supplier. This is an active investigation coordinated by CSE and RCMP. No classified data is believed to have been compromised at this time.", signal_url: "https://twitter.com/PublicSafetyCA" },
+      { type: "osint", handle: "GossiTheDog", name: "Kevin Beaumont", verified: true, time: "7d ago", text: "Canadian federal supply chain hit — very similar to SolarWinds methodology. DLL injection in a routine update, then living-off-the-land for persistence across 14 GOC networks. APT29 fingerprints on the tools. This is a major incident. C2: 162.33.178.9", signal_url: "https://twitter.com/GossiTheDog" }
+    ],
+    mapPos: { x: 455, y: 355 }
+  }
+];
+  {
+    id: "NEY-2025-002",
+    category: "fincrime",
+    subcategory: "Money Laundering",
+    tags: ["money-laundering", "crypto-crime", "shell-companies"],
+    title: "CRA-Linked Shell Company Network Launders $18M Via DeFi",
+    province: "British Columbia",
+    target_types: ["Businesses", "Government"],
+    severity: "high",
+    iocs: [
+      { type: "WALLET", val: "0x3fA9c2E...8D1a" },
+      { type: "DOMAIN", val: "bccorp-holdings.ca" }
+    ],
+    ioas: ["Layering via Tornado Cash forks", "Smurfing via e-transfers"],
+    summary: "FINTRAC and RCMP identified a sophisticated laundering network operating across 14 shell companies registered in BC. Approximately $18M CAD moved through DeFi mixing protocols over 6 months. Funds ultimately converted to real estate in Metro Vancouver.",
+    council: { gemini: true, gpt4o: true, claude: false },
+    timestamp: "2025-07-13T16:45:00Z",
+    source: "FINTRAC / Blockchain Analytics",
+    mapPos: { x: 108, y: 310 }
+  },
+  {
+    id: "NEY-2025-003",
+    category: "cyber",
+    subcategory: "DDoS",
+    tags: ["ddos", "hacktivism", "botnet"],
+    title: "Pro-Russian Hacktivist DDoS Campaign Against Federal Infrastructure",
+    province: "Quebec",
+    target_types: ["Government"],
+    severity: "medium",
+    iocs: [
+      { type: "IP", val: "194.165.16.5" },
+      { type: "IP", val: "45.155.205.233" },
+      { type: "BOTNET", val: "Mirai-QBot variant" }
+    ],
+    ioas: ["UDP flood >340 Gbps", "DNS amplification"],
+    summary: "NoName057(16) coordinated a multi-vector DDoS campaign targeting federal government websites in Quebec. Peak traffic reached 340 Gbps via a Mirai-based botnet. Service disruptions lasted 4.2 hours before Cloudflare mitigation was effective.",
+    council: { gemini: true, gpt4o: false, claude: true },
+    timestamp: "2025-07-13T11:30:00Z",
+    source: "CCCS Alert / Shadowserver",
+    mapPos: { x: 555, y: 260 }
+  },
+  {
+    id: "NEY-2025-004",
+    category: "fincrime",
+    subcategory: "Elder Abuse",
+    tags: ["elder-abuse", "scams", "phone-fraud", "gift-cards"],
+    title: "Grandparent Scam Ring Targets Ontario & Quebec Seniors — $3.2M Lost",
+    province: "Ontario",
+    target_types: ["Individuals"],
+    severity: "high",
+    iocs: [
+      { type: "PHONE", val: "+1-647-555-0183" },
+      { type: "PHONE", val: "+1-514-555-0297" },
+      { type: "DOMAIN", val: "rcmp-urgent-release.com" }
+    ],
+    ioas: ["Impersonation of RCMP/lawyers", "Gift card payment demand"],
+    summary: "An organized crime ring operating primarily from Montreal has victimized 847 seniors across Ontario and Quebec using 'grandparent scam' methodology. Callers impersonate RCMP officers and family members demanding bail payment via Amazon/iTunes gift cards. Total losses exceed $3.2M CAD since January.",
+    council: { gemini: true, gpt4o: true, claude: true },
+    timestamp: "2025-07-12T09:15:00Z",
+    source: "CAFC / RCMP",
+    mapPos: { x: 470, y: 360 }
+  },
+  {
+    id: "NEY-2025-005",
+    category: "cyber",
+    subcategory: "Phishing Campaign",
+    tags: ["phishing", "business-email-compromise", "credential-harvesting"],
+    title: "Large-Scale .CA Domain Phishing Campaign Impersonating CRA",
+    province: "Alberta",
+    target_types: ["Individuals", "Businesses"],
+    severity: "medium",
+    iocs: [
+      { type: "DOMAIN", val: "cra-refund-ca.net" },
+      { type: "DOMAIN", val: "canada-revenue-alert.ca" },
+      { type: "IP", val: "23.106.124.20" },
+      { type: "HASH", val: "e5f7a901bc23d456ef78..." }
+    ],
+    ioas: ["Typosquatting .ca TLDs", "Credential phishing portals"],
+    summary: "A coordinated phishing campaign spanning 23 fraudulent .CA-adjacent domains is impersonating the Canada Revenue Agency. Targets receive SMS/email about 'outstanding refunds' and are directed to convincing fake CRA portals harvesting SIN numbers and banking credentials. 12,000+ Canadians affected.",
+    council: { gemini: false, gpt4o: true, claude: true },
+    timestamp: "2025-07-12T14:00:00Z",
+    source: "CRTC / AlienVault",
+    mapPos: { x: 210, y: 300 }
+  },
+  {
+    id: "NEY-2025-006",
+    category: "cyber",
+    subcategory: "Data Breach",
+    tags: ["data-breach", "large-data-leak", "canadian-tld", "pii-exposure"],
+    title: "Major Canadian Retailer Breach — 4.1M Customer Records on Dark Web",
+    province: "Manitoba",
+    target_types: ["Businesses", "Individuals"],
+    severity: "high",
+    iocs: [
+      { type: "DOMAIN", val: "breach-ca-db.onion" },
+      { type: "HASH", val: "9d4c2f18e30b765a1c44..." }
+    ],
+    ioas: ["SQL injection on legacy .CA portal", "Data listing on BreachForums"],
+    summary: "A major Canadian retail chain operating in Manitoba and Saskatchewan suffered a database breach exposing 4.1 million customer records including names, SINs, credit card partial data, and loyalty points. Data appeared on a dark web forum priced at $12,000 USD. Breach persisted undetected for 74 days.",
+    council: { gemini: true, gpt4o: true, claude: true },
+    timestamp: "2025-07-11T18:30:00Z",
+    source: "HaveIBeenPwned / DarkOwl",
+    mapPos: { x: 350, y: 300 }
+  },
+  {
+    id: "NEY-2025-007",
+    category: "fincrime",
+    subcategory: "Banking Malware",
+    tags: ["banking-malware", "credential-theft", "mobile-banking"],
+    title: "Android Banking Trojan 'MapleRAT' Targets Big Six Banks",
+    province: "British Columbia",
+    target_types: ["Individuals"],
+    severity: "high",
+    iocs: [
+      { type: "HASH", val: "b2e44f9a17dc8301fcb5..." },
+      { type: "DOMAIN", val: "ca-banking-update.apk.io" },
+      { type: "IP", val: "91.234.99.10" }
+    ],
+    ioas: ["Overlay attack on RBC/TD/BMO apps", "SMS OTP interception"],
+    summary: "A previously undocumented Android trojan dubbed 'MapleRAT' is propagating via fraudulent Google Play listings and SMS lure campaigns. The malware deploys overlay attacks against all six major Canadian bank apps, intercepts SMS-based OTPs, and exfiltrates credentials to a C2 server in Eastern Europe.",
+    council: { gemini: true, gpt4o: true, claude: true },
+    timestamp: "2025-07-11T10:00:00Z",
+    source: "CCCS / ThreatFabric",
+    mapPos: { x: 95, y: 350 }
+  },
+  {
+    id: "NEY-2025-008",
+    category: "cyber",
+    subcategory: "AI Attack",
+    tags: ["ai-attack", "deepfake", "business-email-compromise"],
+    title: "AI-Generated CEO Deepfake Enables $4.8M BEC Fraud",
+    province: "Ontario",
+    target_types: ["Businesses"],
+    severity: "high",
+    iocs: [
+      { type: "EMAIL", val: "ceo-secure@corpcomms-ca.net" },
+      { type: "DOMAIN", val: "corpcomms-ca.net" }
+    ],
+    ioas: ["Voice deepfake in video call", "Wire transfer to Dubai intermediary"],
+    summary: "A sophisticated Business Email Compromise attack leveraged AI-generated video deepfakes of a Toronto-based mining company CEO to authorize a $4.8M CAD fraudulent wire transfer. The CFO participated in a 12-minute video call with the synthetic CEO before executing the transfer. Funds routed through UAE.",
+    council: { gemini: true, gpt4o: false, claude: true },
+    timestamp: "2025-07-10T15:20:00Z",
+    source: "CAFC / Victim Report",
+    mapPos: { x: 415, y: 310 }
+  },
+  {
+    id: "NEY-2025-009",
+    category: "fincrime",
+    subcategory: "Crypto Crime",
+    tags: ["crypto-crime", "rug-pull", "defi", "investment-fraud"],
+    title: "Canadian DeFi 'MapleFi' Project Rug Pull — $22M Vanished",
+    province: "Quebec",
+    target_types: ["Individuals"],
+    severity: "medium",
+    iocs: [
+      { type: "WALLET", val: "0x8Ba1...f3E2" },
+      { type: "DOMAIN", val: "maplefinance.io" }
+    ],
+    ioas: ["Liquidity pool drainage", "Team wallet anonymization via Tornado Cash"],
+    summary: "The MapleFi decentralized finance project, marketed heavily to Canadian retail investors via Quebec-based social media influencers, executed a rug pull removing $22M USD in liquidity. The development team anonymized wallets through mixing services before project collapse. OSC has opened an investigation.",
+    council: { gemini: false, gpt4o: true, claude: true },
+    timestamp: "2025-07-10T08:00:00Z",
+    source: "OSC / Blockchain Analytics",
+    mapPos: { x: 530, y: 290 }
+  },
+  {
+    id: "NEY-2025-010",
+    category: "cyber",
+    subcategory: "Ransomware",
+    tags: ["ransomware", "critical-infrastructure", "ics-scada"],
+    title: "ICS-Targeted Ransomware Disrupts Saskatchewan Energy Utility",
+    province: "Saskatchewan",
+    target_types: ["Government", "Businesses"],
+    severity: "high",
+    iocs: [
+      { type: "IP", val: "176.111.174.26" },
+      { type: "HASH", val: "c7d9e3f0a15b8426dc91..." }
+    ],
+    ioas: ["Phishing → VPN compromise → Pivoting to OT network", "SCADA workstation encryption"],
+    summary: "A ransomware group with suspected state-nexus compromised SCADA systems at a Saskatchewan provincial energy utility. OT network isolation prevented grid disruption but operational recovery required 9 days. The incident triggered CCCS Critical Infrastructure Notification Protocol Level 2.",
+    council: { gemini: true, gpt4o: true, claude: true },
+    timestamp: "2025-07-09T06:45:00Z",
+    source: "CCCS / ICS-CERT Canada",
+    mapPos: { x: 272, y: 290 }
+  },
+  {
+    id: "NEY-2025-011",
+    category: "fincrime",
+    subcategory: "Cyber Fraud",
+    tags: ["cyber-fraud", "investment-scam", "romance-scam", "pig-butchering"],
+    title: "'Pig Butchering' Investment Scam Ring Extracts $7M from Atlantic Canadians",
+    province: "Nova Scotia",
+    target_types: ["Individuals"],
+    severity: "medium",
+    iocs: [
+      { type: "DOMAIN", val: "canadiantrade-pro.com" },
+      { type: "PHONE", val: "+1-902-555-0341" }
+    ],
+    ioas: ["Romance lure via dating apps", "Fake crypto trading platform"],
+    summary: "An extensive 'pig butchering' scam operation targeting residents of Nova Scotia and New Brunswick has extracted approximately $7M CAD from 134 victims. Operators cultivate romantic relationships over months before introducing fake cryptocurrency investment platforms showing fabricated returns.",
+    council: { gemini: true, gpt4o: true, claude: false },
+    timestamp: "2025-07-08T12:00:00Z",
+    source: "CAFC / NS RCMP",
+    mapPos: { x: 700, y: 410 }
+  },
+  {
+    id: "NEY-2025-012",
+    category: "cyber",
+    subcategory: "Data Breach",
+    tags: ["data-breach", "supply-chain", "third-party-vendor"],
+    title: "Federal Government Supply Chain Breach Via Managed IT Provider",
+    province: "Ontario",
+    target_types: ["Government"],
+    severity: "high",
+    iocs: [
+      { type: "DOMAIN", val: "govtech-ca-support.com" },
+      { type: "IP", val: "162.33.178.9" },
+      { type: "HASH", val: "d1a78c5e20f934b61e82..." }
+    ],
+    ioas: ["SolarWinds-style DLL injection", "Living-off-the-land (LOL) techniques"],
+    summary: "A sophisticated threat actor, assessed with high confidence as APT29 (Cozy Bear), compromised a federal government IT managed services provider. Malicious code injected into routine software updates granted persistent access to 14 Government of Canada networks. TBS and CSE are coordinating response.",
+    council: { gemini: true, gpt4o: true, claude: true },
+    timestamp: "2025-07-07T20:00:00Z",
+    source: "CSE / CISA Advisory",
+    mapPos: { x: 455, y: 355 }
+  }
+// ══════════════════════════════════════════════
+// SOURCE STATUS CONFIG (9 feeds)
+// ══════════════════════════════════════════════
+const ALL_SOURCES = [
+  { id: "cccs",        name: "CCCS RSS Alerts",           type: "gov",        url: "https://cyber.gc.ca/webservice/en/rss/alerts",      desc: "Official Canadian cyber advisories & alerts" },
+  { id: "cafc",        name: "CAFC Fraud Bulletins",      type: "gov",        url: "https://antifraudcentre-centreantifraude.ca",       desc: "Canadian Anti-Fraud Centre news releases" },
+  { id: "fintrac",     name: "FINTRAC Advisories",        type: "gov",        url: "https://fintrac-canafe.canada.ca",                  desc: "Financial intelligence & AML typologies" },
+  { id: "otx",         name: "AlienVault OTX",            type: "osint",      url: "https://otx.alienvault.com/api/v1/pulses/search",   desc: "Global threat pulses filtered for Canada" },
+  { id: "cisa",        name: "CISA KEV Catalog",          type: "gov",        url: "https://cisa.gov/known-exploited-vulnerabilities",  desc: "Known Exploited Vulnerabilities (last 7d)" },
+  { id: "threatfox",   name: "ThreatFox / abuse.ch",      type: "osint",      url: "https://threatfox-api.abuse.ch",                   desc: "Real-time malware IOC feeds" },
+  { id: "chainabuse",  name: "Chainabuse API",            type: "blockchain", url: "https://www.chainabuse.com",                       desc: "Crypto scam & fraud community reports (CA)" },
+  { id: "hibp",        name: "HaveIBeenPwned",            type: "osint",      url: "https://haveibeenpwned.com/api/v3/breaches",        desc: "Breach detection for .ca domain orgs" },
+  { id: "x",           name: "X / Twitter Watchlist",     type: "x",          url: "https://twitter.com",                              desc: "22 curated Canadian CTI accounts monitored" },
+];
+
+// ══════════════════════════════════════════════
+// PROVINCE STATS (computed from THREATS data)
+// ══════════════════════════════════════════════
+function computeProvinceStats() {
+  const stats = {};
+  for (const t of THREATS) {
+    const p = t.province || 'National';
+    if (!stats[p]) stats[p] = { count: 0, high: 0, cyber: 0, fincrime: 0, score_sum: 0, threats: [] };
+    stats[p].count++;
+    stats[p].threats.push(t);
+    stats[p].score_sum += (t.severity === 'high' ? 30 : t.severity === 'medium' ? 20 : 10);
+    if (t.severity === 'high') stats[p].high++;
+    if (t.category === 'cyber') stats[p].cyber++;
+    else stats[p].fincrime++;
+  }
+  return stats;
+}
+
+function getHeatClass(count, high) {
+  if (count === 0) return '';
+  if (high >= 3 || count >= 5) return 'heat-critical';
+  if (high >= 2 || count >= 3) return 'heat-high';
+  if (high >= 1 || count >= 2) return 'heat-medium';
+  return 'heat-low';
+}
+
+function applyProvinceHeatmap() {
+  const stats = computeProvinceStats();
+  const provincePathMap = {
+    'British Columbia': 0, 'Alberta': 1, 'Saskatchewan': 2, 'Manitoba': 3,
+    'Ontario': 4, 'Quebec': 5, 'New Brunswick': 6, 'Nova Scotia': 7,
+    'Newfoundland and Labrador': 8, 'Yukon': 9, 'Northwest Territories': 10,
+    'Nunavut': 11
+  };
+
+  // Apply heat classes to SVG province paths
+  const paths = document.querySelectorAll('.province-path');
+  Object.entries(stats).forEach(([prov, data]) => {
+    // Match provinces to paths by rough index
+    const idx = Object.keys(provincePathMap).indexOf(prov);
+    if (idx >= 0 && paths[idx]) {
+      paths[idx].classList.remove('heat-low','heat-medium','heat-high','heat-critical');
+      const cls = getHeatClass(data.count, data.high);
+      if (cls) paths[idx].classList.add(cls);
+    }
+  });
+}
+
+// ══════════════════════════════════════════════
+// SPARKLINE RENDERER
+// ══════════════════════════════════════════════
+function renderSparkline(canvasEl, data30d) {
+  const W = canvasEl.offsetWidth || 280;
+  const H = 48;
+  canvasEl.width  = W;
+  canvasEl.height = H;
+  const ctx = canvasEl.getContext('2d');
+
+  const max = Math.max(...data30d, 1);
+  const barW = Math.floor(W / 30) - 1;
+
+  ctx.clearRect(0, 0, W, H);
+
+  data30d.forEach((val, i) => {
+    const h = Math.max(2, Math.round((val / max) * (H - 4)));
+    const x = i * (barW + 1);
+    const y = H - h;
+
+    // Color bars by recency (last 7 days = brighter)
+    const age = 30 - i;
+    const alpha = age <= 7 ? 0.8 : 0.35;
+    const color = val > 0 ? (age <= 7 ? `rgba(255,32,64,${alpha})` : `rgba(0,200,255,${alpha})`) : 'rgba(255,255,255,0.04)';
+
+    ctx.fillStyle = color;
+    ctx.fillRect(x, y, barW, h);
+  });
+
+  // Trend line
+  const points = data30d.map((val, i) => ({
+    x: i * (barW + 1) + barW / 2,
+    y: val > 0 ? H - Math.max(2, Math.round((val / max) * (H - 4))) - 1 : H
+  }));
+
+  ctx.beginPath();
+  ctx.strokeStyle = 'rgba(0,200,255,0.4)';
+  ctx.lineWidth = 1;
+  points.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+  ctx.stroke();
+}
+
+// ══════════════════════════════════════════════
+// STATS PANEL RENDERER
+// ══════════════════════════════════════════════
+function renderStatsPanel() {
+  const view = document.getElementById('statsView');
+  const stats = computeProvinceStats();
+  const total = THREATS.length;
+  const high  = THREATS.filter(t => t.severity === 'high').length;
+  const cyber = THREATS.filter(t => t.category === 'cyber').length;
+  const finc  = THREATS.filter(t => t.category === 'fincrime').length;
+
+  // 30-day timeline: bucket threats by day
+  const now = new Date();
+  const days30 = Array.from({length: 30}, (_, i) => {
+    const d = new Date(now);
+    d.setDate(d.getDate() - (29 - i));
+    return d.toISOString().slice(0, 10);
+  });
+  const timeline = Object.fromEntries(days30.map(d => [d, 0]));
+  for (const t of THREATS) {
+    const day = (t.timestamp || '').slice(0, 10);
+    if (day in timeline) timeline[day]++;
+  }
+  const timelineArr = days30.map(d => timeline[d]);
+
+  // Province ranking
+  const ranked = Object.entries(stats)
+    .filter(([p]) => p !== 'National')
+    .sort(([,a],[,b]) => b.count - a.count)
+    .slice(0, 10);
+
+  const maxCount = ranked[0]?.[1].count || 1;
+
+  const rankRows = ranked.map(([prov, data], i) => {
+    const pct = Math.round((data.count / maxCount) * 100);
+    const barColor = data.high >= 2 ? 'var(--red)' : data.high >= 1 ? 'var(--amber)' : 'var(--cyan)';
+    return `
+      <div class="province-rank-item" onclick="filterByProvince('${prov}')">
+        <span class="province-rank-num">${i + 1}</span>
+        <span class="province-rank-name">${prov}</span>
+        <div class="province-rank-bar-wrap">
+          <div class="province-rank-bar" style="width:${pct}%;background:${barColor};"></div>
+        </div>
+        <span class="province-rank-count">${data.count}</span>
+        <span class="province-rank-hi">${data.high > 0 ? data.high + '🔴' : ''}</span>
+      </div>`;
+  }).join('');
+
+  // Signal source breakdown
+  const sourceCounts = {};
+  for (const t of THREATS) {
+    for (const s of (t.signal_sources || [])) {
+      sourceCounts[s.type] = (sourceCounts[s.type] || 0) + 1;
+    }
+  }
+  const sigRows = Object.entries(sourceCounts)
+    .sort(([,a],[,b]) => b - a)
+    .map(([type, count]) => {
+      const cfg = SOURCE_CONFIG[type] || { label: type, color: '#5a7a9a' };
+      return `<div style="display:flex;align-items:center;gap:8px;padding:5px 16px;border-bottom:1px solid rgba(255,255,255,0.03);">
+        <span class="source-badge ${type}">${cfg.label}</span>
+        <span style="font-family:var(--font-mono);font-size:9px;color:var(--text-secondary);flex:1;">${type.toUpperCase()}</span>
+        <span style="font-family:var(--font-mono);font-size:9px;color:var(--cyan);">${count}</span>
+      </div>`;
+    }).join('');
+
+  view.innerHTML = `
+    <div class="stats-grid">
+      <div class="stat-card red">
+        <div class="stat-val red">${total}</div>
+        <div class="stat-label">ACTIVE THREATS</div>
+      </div>
+      <div class="stat-card amber">
+        <div class="stat-val amber">${high}</div>
+        <div class="stat-label">HIGH SEVERITY</div>
+      </div>
+      <div class="stat-card red">
+        <div class="stat-val red" style="font-size:20px;">${cyber}</div>
+        <div class="stat-label">CYBER ATTACKS</div>
+      </div>
+      <div class="stat-card amber">
+        <div class="stat-val amber" style="font-size:20px;">${finc}</div>
+        <div class="stat-label">FINANCIAL CRIMES</div>
+      </div>
+    </div>
+
+    <div class="sparkline-wrap">
+      <div class="sparkline-label">
+        <span>30-DAY EVENT TIMELINE</span>
+        <span style="color:var(--red);">▪ LAST 7D</span>
+      </div>
+      <canvas id="statsSparkline" style="width:100%;height:48px;display:block;"></canvas>
+    </div>
+
+    <div class="d-section-label" style="padding:10px 16px 4px;font-family:var(--font-mono);font-size:8px;color:var(--text-muted);letter-spacing:2px;">
+      PROVINCE RANKING &nbsp;
+      <span style="color:var(--text-muted);font-size:7px;">(click to filter)</span>
+    </div>
+    ${rankRows}
+
+    ${sigRows ? `
+    <div class="d-section-label" style="padding:10px 16px 4px;font-family:var(--font-mono);font-size:8px;color:var(--text-muted);letter-spacing:2px;">SIGNAL SOURCES</div>
+    ${sigRows}` : ''}
+  `;
+
+  // Draw sparkline after DOM update
+  requestAnimationFrame(() => {
+    const canvas = document.getElementById('statsSparkline');
+    if (canvas) renderSparkline(canvas, timelineArr);
+  });
+}
+
+// ══════════════════════════════════════════════
+// SOURCES PANEL RENDERER
+// ══════════════════════════════════════════════
+function renderSourcesPanel() {
+  const view = document.getElementById('sourcesView');
+
+  const sourceCards = ALL_SOURCES.map(src => {
+    const cfg = SOURCE_CONFIG[src.type] || { label: src.type };
+    const isX = src.type === 'x';
+
+    let extraContent = '';
+    if (isX) {
+      const tierCounts = {};
+      for (const w of X_WATCHLIST) { tierCounts[w.tier] = (tierCounts[w.tier] || 0) + 1; }
+      const totalSigs = X_WATCHLIST.reduce((a, w) => a + w.signal_count, 0);
+      extraContent = `
+        <div style="margin-top:8px;display:flex;gap:5px;flex-wrap:wrap;">
+          ${Object.entries(tierCounts).map(([tier, cnt]) =>
+            `<span class="source-badge ${tier}">${SOURCE_CONFIG[tier]?.label || tier} ×${cnt}</span>`
+          ).join('')}
+        </div>
+        <div style="font-family:var(--font-mono);font-size:8px;color:var(--text-muted);margin-top:5px;">
+          ${X_WATCHLIST.filter(w=>w.active).length} active · ${totalSigs} total signals this cycle
+        </div>`;
+    }
+
+    // Count threats from this source
+    const threatCount = THREATS.filter(t =>
+      (t.source || '').toLowerCase().includes(src.name.split(' ')[0].toLowerCase()) ||
+      (t.signal_sources || []).some(s =>
+        src.type === 'x' ? s.type === 'x' : s.type === src.type
+      )
+    ).length;
+
+    return `
+      <div style="padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.04);">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
+          <span class="source-badge ${src.type}">${cfg.label}</span>
+          <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-primary);font-weight:600;flex:1;">${src.name}</span>
+          ${threatCount > 0 ? `<span style="font-family:var(--font-mono);font-size:9px;color:var(--cyan);">${threatCount} signals</span>` : ''}
+        </div>
+        <div style="font-size:10px;color:var(--text-secondary);line-height:1.5;">${src.desc}</div>
+        ${extraContent}
+        <div style="margin-top:5px;">
+          <a href="${src.url}" target="_blank" class="signal-link">↗ ${src.url.replace('https://','')}</a>
+        </div>
+      </div>`;
+  }).join('');
+
+  const watchRows = X_WATCHLIST.map(w => `
+    <div class="watchlist-item">
+      <div class="watchlist-dot ${w.active ? 'active' : 'inactive'}"></div>
+      <span class="watchlist-handle">@${w.handle}</span>
+      <span class="watchlist-category">${w.category}</span>
+      <span class="source-badge ${w.type}" style="font-size:7px;">${SOURCE_CONFIG[w.type]?.label || w.type}</span>
+      <span class="watchlist-count">${w.signal_count}</span>
+    </div>`).join('');
+
+  view.innerHTML = `
+    <div class="d-section-label" style="padding:10px 16px 4px;font-family:var(--font-mono);font-size:8px;color:var(--text-muted);letter-spacing:2px;">
+      DATA SOURCES (${ALL_SOURCES.length})
+    </div>
+    ${sourceCards}
+
+    <div class="d-section-label" style="padding:12px 16px 4px;font-family:var(--font-mono);font-size:8px;color:var(--text-muted);letter-spacing:2px;">
+      𝕏 WATCHLIST — ALL ${X_WATCHLIST.length} ACCOUNTS
+    </div>
+    ${watchRows}
+  `;
+}
+
+// ══════════════════════════════════════════════
+// PANEL TAB SWITCHING
+// ══════════════════════════════════════════════
+let activeTab = 'intel';
+
+function switchTab(tabName) {
+  activeTab = tabName;
+
+  document.querySelectorAll('.panel-tab').forEach(t => t.classList.remove('active'));
+  document.querySelector(`.panel-tab[data-tab="${tabName}"]`)?.classList.add('active');
+
+  const detail  = document.getElementById('detailContent');
+  const stats   = document.getElementById('statsView');
+  const sources = document.getElementById('sourcesView');
+
+  detail.classList.toggle('hidden', tabName !== 'intel');
+  stats.classList.toggle('visible', tabName === 'stats');
+  sources.classList.toggle('visible', tabName === 'sources');
+
+  if (tabName === 'stats') renderStatsPanel();
+  if (tabName === 'sources') renderSourcesPanel();
+}
+
+document.querySelectorAll('.panel-tab').forEach(tab => {
+  tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+});
+
+// ══════════════════════════════════════════════
+// PROVINCE FILTER SHORTCUT (from stats panel)
+// ══════════════════════════════════════════════
+function filterByProvince(province) {
+  document.getElementById('searchInput').value = province;
+  searchQuery = province;
+  renderFeed();
+  renderDots();
+  switchTab('intel');
+}
+
+// ══════════════════════════════════════════════
+// SOURCE TYPE CONFIG
+// ══════════════════════════════════════════════
+const SOURCE_CONFIG = {
+  x:          { label: '𝕏',        color: '#9cacba', title: 'X / Twitter' },
+  gov:        { label: 'GOV',      color: '#00c8ff', title: 'Canadian Government' },
+  osint:      { label: 'OSINT',    color: '#00ff88', title: 'Open-Source Intel' },
+  police:     { label: 'POLICE',   color: '#7c9dff', title: 'Law Enforcement' },
+  blockchain: { label: 'CHAIN',    color: '#ffb800', title: 'Blockchain Analytics' },
+};
+
+let activeFilter = 'all';
+let selectedId = null;
+let searchQuery = '';
+
+// ══════════════════════════════════════════════
+// RENDER FUNCTIONS
+// ══════════════════════════════════════════════
+function getFilteredThreats() {
+  return THREATS.filter(t => {
+    let matchFilter = true;
+    if (activeFilter === 'cyber')    matchFilter = t.category === 'cyber';
+    if (activeFilter === 'fincrime') matchFilter = t.category === 'fincrime';
+    if (activeFilter === 'social')   matchFilter = t.signal_sources && t.signal_sources.some(s => s.type === 'x');
+    const q = searchQuery.toLowerCase();
+    const matchSearch = !q ||
+      t.title.toLowerCase().includes(q) ||
+      t.province.toLowerCase().includes(q) ||
+      t.tags.some(tg => tg.includes(q)) ||
+      t.subcategory.toLowerCase().includes(q) ||
+      t.id.toLowerCase().includes(q) ||
+      t.iocs.some(i => i.val.toLowerCase().includes(q)) ||
+      (t.signal_sources || []).some(s => s.handle.toLowerCase().includes(q) || s.text.toLowerCase().includes(q));
+    return matchFilter && matchSearch;
+  });
+}
+
+function getSourceIcon(type) {
+  const cfg = SOURCE_CONFIG[type] || SOURCE_CONFIG.osint;
+  return `<span class="source-badge ${type}" title="${cfg.title}">${cfg.label}</span>`;
+}
+
+function renderFeed() {
+  const feed = document.getElementById('threatFeed');
+  const filtered = getFilteredThreats();
+  feed.innerHTML = '';
+
+  filtered.forEach(t => {
+    const item = document.createElement('div');
+    item.className = `threat-item ${t.category}${t.id === selectedId ? ' selected' : ''}`;
+    item.dataset.id = t.id;
+
+    const dt = new Date(t.timestamp);
+    const timeStr = dt.toLocaleDateString('en-CA', { month: 'short', day: 'numeric' }) + ' ' +
+                    dt.toLocaleTimeString('en-CA', { hour: '2-digit', minute: '2-digit' });
+
+    // Build source icons for this threat
+    const sigSources = t.signal_sources || [];
+    const uniqueTypes = [...new Set(sigSources.map(s => s.type))];
+    const sourceIcons = uniqueTypes.map(type => getSourceIcon(type)).join('');
+    const sigCount = sigSources.length;
+
+    item.innerHTML = `
+      <div class="threat-meta">
+        <span class="threat-badge ${t.category}">${t.category === 'cyber' ? 'CYBER' : 'FINCRIME'}</span>
+        <span class="threat-severity ${t.severity}">${t.severity.toUpperCase()}</span>
+        ${sigCount > 0 ? `<span style="margin-left:auto;font-family:var(--font-mono);font-size:8px;color:var(--text-muted);">${sigCount} sig</span>` : ''}
+      </div>
+      <div class="threat-title">${t.title}</div>
+      <div class="threat-province">${t.province} · ${t.subcategory}</div>
+      <div style="display:flex;align-items:center;gap:5px;margin-top:5px;flex-wrap:wrap;">
+        ${t.tags.slice(0,2).map(tg => `<span class="tag">#${tg}</span>`).join('')}
+        ${sourceIcons}
+      </div>
+      <div class="threat-time">${timeStr} · ${t.source.split('/')[0].trim()}</div>
+    `;
+
+    item.addEventListener('click', () => selectThreat(t.id));
+    feed.appendChild(item);
+  });
+
+  document.getElementById('feedCount').textContent = `${filtered.length} events`;
+  updateStats();
+}
+
+function updateStats() {
+  const all = THREATS;
+  document.getElementById('totalThreats').textContent = all.length;
+  document.getElementById('cyberCount').textContent = all.filter(t => t.category === 'cyber').length;
+  document.getElementById('fincrimeCount').textContent = all.filter(t => t.category === 'fincrime').length;
+}
+
+function renderDots() {
+  const container = document.getElementById('threatDots');
+  container.innerHTML = '';
+
+  const mapSvg = document.getElementById('canada-map');
+  const filtered = getFilteredThreats();
+
+  filtered.forEach(t => {
+    // Convert SVG coords to % for absolute positioning
+    const pctX = (t.mapPos.x / 900) * 100;
+    const pctY = (t.mapPos.y / 560) * 100;
+
+    const size = t.severity === 'high' ? 10 : t.severity === 'medium' ? 7 : 5;
+    const animDelay = Math.random() * 2;
+
+    const wrap = document.createElement('div');
+    wrap.className = 'threat-dot-wrap';
+    wrap.style.cssText = `left:${pctX}%;top:${pctY}%;pointer-events:all;`;
+    wrap.dataset.id = t.id;
+
+    wrap.innerHTML = `
+      <div class="threat-dot ${t.category}" style="width:${size}px;height:${size}px;"></div>
+      <div class="pulse-ring ${t.category}" style="animation-delay:${animDelay}s;"></div>
+      <div class="pulse-ring ${t.category}" style="animation-delay:${animDelay + 0.7}s;"></div>
+    `;
+
+    wrap.addEventListener('click', () => selectThreat(t.id));
+    wrap.addEventListener('mouseenter', (e) => showTooltip(e, t));
+    wrap.addEventListener('mouseleave', hideTooltip);
+
+    container.appendChild(wrap);
+  });
+}
+
+function showTooltip(e, t) {
+  const tt = document.getElementById('mapTooltip');
+  tt.innerHTML = `<strong>${t.subcategory}</strong> · ${t.severity.toUpperCase()}<br>${t.province}<br><span style="color:var(--text-muted)">${t.title.substring(0,50)}...</span>`;
+  tt.style.display = 'block';
+
+  const mapArea = document.querySelector('.map-area');
+  const rect = mapArea.getBoundingClientRect();
+  let x = e.clientX - rect.left + 12;
+  let y = e.clientY - rect.top - 10;
+  if (x + 200 > rect.width) x -= 220;
+  tt.style.left = x + 'px';
+  tt.style.top = y + 'px';
+}
+
+function hideTooltip() {
+  document.getElementById('mapTooltip').style.display = 'none';
+}
+
+function selectThreat(id) {
+  selectedId = id;
+  const t = THREATS.find(th => th.id === id);
+
+  // Highlight in feed
+  document.querySelectorAll('.threat-item').forEach(el => {
+    el.classList.toggle('selected', el.dataset.id === id);
+  });
+
+  renderDetailPanel(t);
+  document.getElementById('detailId').textContent = t.id;
+}
+
+function renderDetailPanel(t) {
+  const dt = new Date(t.timestamp);
+  const timeStr = dt.toLocaleString('en-CA', { dateStyle: 'medium', timeStyle: 'short' });
+
+  const councilNodes = Object.entries(t.council).map(([name, vote]) => `
+    <div class="council-node">
+      <div class="council-name">${name.toUpperCase()}</div>
+      <div class="council-vote ${vote ? 'agree' : 'disagree'}">${vote ? '✓' : '✗'}</div>
+    </div>
+  `).join('');
+
+  const agreeCount = Object.values(t.council).filter(Boolean).length;
+  const validated = agreeCount >= 2;
+
+  const iocList = t.iocs.map(ioc => `
+    <div class="ioc-item">
+      <span class="ioc-type">${ioc.type}</span>
+      <span class="ioc-val">${ioc.val}</span>
+    </div>
+  `).join('');
+
+  const targetChips = t.target_types.map(tt => `<span class="target-chip">${tt}</span>`).join('');
+  const tagChips = t.tags.map(tg => `<span class="tag">#${tg}</span>`).join('');
+
+  // ── Signal Sources (X posts, gov posts, etc.) ──
+  const sigSources = t.signal_sources || [];
+  const signalHTML = sigSources.map(s => {
+    const cfg = SOURCE_CONFIG[s.type] || SOURCE_CONFIG.osint;
+    const avatarChar = s.handle[0].toUpperCase();
+    // Highlight hashtags and @mentions
+    const formattedText = s.text
+      .replace(/#(\w+)/g, '<span class="hash">#$1</span>')
+      .replace(/@(\w+)/g, '<span class="highlight">@$1</span>');
+    return `
+      <div class="signal-source-item ${s.type}-post">
+        <div class="signal-header">
+          <div class="signal-avatar">${avatarChar}</div>
+          <div class="signal-handle">
+            ${s.name}
+            <span class="at"> @${s.handle}</span>
+          </div>
+          ${s.verified ? '<span class="signal-verified" title="Verified Account">✓</span>' : ''}
+          <span class="source-badge ${s.type}">${cfg.label}</span>
+          <span class="signal-time">${s.time}</span>
+        </div>
+        <div class="signal-text">${formattedText}</div>
+        <a class="signal-link" href="${s.signal_url}" target="_blank">↗ VIEW POST · ${s.signal_url.replace('https://twitter.com/', 'x.com/')}</a>
+      </div>
+    `;
+  }).join('');
+
+  document.getElementById('detailContent').innerHTML = `
+    <div class="d-section">
+      <div class="d-badges">
+        <span class="d-badge ${t.category}">${t.category === 'cyber' ? '⚡ CYBER' : '$ FINCRIME'}</span>
+        <span class="d-badge ${t.severity}">${t.severity.toUpperCase()} SEVERITY</span>
+        ${validated ? '<span class="d-badge" style="background:rgba(0,255,136,0.1);color:var(--green);border:1px solid rgba(0,255,136,0.2)">✓ VALIDATED</span>' : ''}
+      </div>
+      <div class="d-title">${t.title}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:3px;">${tagChips}</div>
+    </div>
+
+    <div class="d-section">
+      <div class="d-section-label">Event Details</div>
+      <div class="d-grid">
+        <div class="d-field">
+          <span class="d-field-label">Province</span>
+          <span class="d-field-val accent">◈ ${t.province}</span>
+        </div>
+        <div class="d-field">
+          <span class="d-field-label">Subcategory</span>
+          <span class="d-field-val">${t.subcategory}</span>
+        </div>
+        <div class="d-field">
+          <span class="d-field-label">Timestamp</span>
+          <span class="d-field-val">${timeStr}</span>
+        </div>
+        <div class="d-field">
+          <span class="d-field-label">Primary Source</span>
+          <span class="d-field-val">${t.source}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-section">
+      <div class="d-section-label">Target Types</div>
+      <div class="target-chips">${targetChips}</div>
+    </div>
+
+    <div class="d-section">
+      <div class="d-section-label">IOC / IOA</div>
+      <div class="ioc-list">${iocList}</div>
+      ${t.ioas ? `<div style="margin-top:8px;">${t.ioas.map(ioa => `
+        <div class="ioc-item">
+          <span class="ioc-type" style="color:var(--amber);background:var(--amber-dim);">IOA</span>
+          <span class="ioc-val">${ioa}</span>
+        </div>`).join('')}</div>` : ''}
+    </div>
+
+    ${sigSources.length > 0 ? `
+    <div class="d-section">
+      <div class="d-section-label">Signal Sources (${sigSources.length})</div>
+      <div class="source-tray">
+        ${[...new Set(sigSources.map(s=>s.type))].map(type => {
+          const cfg = SOURCE_CONFIG[type] || {};
+          return `<span class="source-badge ${type}">${cfg.label || type.toUpperCase()}</span>`;
+        }).join('')}
+        <span style="font-family:var(--font-mono);font-size:8px;color:var(--text-muted);margin-left:auto;">${sigSources.length} corroborating signal${sigSources.length > 1 ? 's' : ''}</span>
+      </div>
+      ${signalHTML}
+    </div>` : ''}
+
+    <div class="d-section">
+      <div class="d-section-label">AI Council Validation</div>
+      <div class="council-row">${councilNodes}</div>
+      <div style="margin-top:8px;font-family:var(--font-mono);font-size:9px;color:${validated ? 'var(--green)' : 'var(--amber)'};">
+        ${agreeCount}/3 consensus · ${validated ? 'THREAT VALIDATED' : 'PENDING VALIDATION'}
+      </div>
+    </div>
+
+    <div class="d-section">
+      <div class="d-section-label">AI-Generated Summary</div>
+      <div class="ai-summary">
+        <div class="ai-label">NORTH E.Y.E. SYNTHESIS</div>
+        <div class="ai-text">${t.summary}</div>
+      </div>
+    </div>
+  `;
+}
+
+// ══════════════════════════════════════════════
+// WATCHLIST MINI RENDER
+// ══════════════════════════════════════════════
+function renderWatchlistMini() {
+  const container = document.getElementById('watchlistMini');
+  // Show top 5 by signal count
+  const top = [...X_WATCHLIST].sort((a,b) => b.signal_count - a.signal_count).slice(0, 5);
+  container.innerHTML = top.map(w => `
+    <div class="watchlist-item" style="padding:3px 0;">
+      <div class="watchlist-dot ${w.active ? 'active' : 'inactive'}"></div>
+      <span class="watchlist-handle" style="font-size:8px;">@${w.handle}</span>
+      <span class="source-badge ${w.type}" style="font-size:6px;">${SOURCE_CONFIG[w.type]?.label || w.type}</span>
+      <span class="watchlist-count">${w.signal_count}</span>
+    </div>
+  `).join('');
+}
+
+// ══════════════════════════════════════════════
+// TICKER
+// ══════════════════════════════════════════════
+function renderTicker() {
+  const ticker = document.getElementById('tickerInner');
+  const items = THREATS.map(t => {
+    const sig = t.signal_sources && t.signal_sources.length > 0 
+      ? ` [${t.signal_sources.map(s => '@'+s.handle).join(', ')}]`
+      : '';
+    return `<span class="ticker-item">[${t.province.toUpperCase()}] ${t.title}${sig}</span>`;
+  }).join('');
+  ticker.innerHTML = items + items;
+}
+
+// ══════════════════════════════════════════════
+// CLOCK & SYNC
+// ══════════════════════════════════════════════
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    now.toLocaleString('en-CA', { timeZone: 'America/Toronto', hour12: false,
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' EST';
+
+  const next = new Date(now);
+  next.setMinutes(Math.ceil(next.getMinutes() / 60) * 60, 0, 0);
+  const diff = Math.floor((next - now) / 60000);
+  document.getElementById('nextSync').textContent = diff + 'min';
+
+  document.getElementById('mapTimestamp').textContent =
+    'LAST UPDATED: ' + now.toLocaleString('en-CA', {
+      timeZone: 'America/Toronto', month: 'short', day: 'numeric',
+      hour: '2-digit', minute: '2-digit', hour12: false }) + ' EST';
+}
+
+// ══════════════════════════════════════════════
+// FILTER & SEARCH
+// ══════════════════════════════════════════════
+document.querySelectorAll('.chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    activeFilter = chip.dataset.filter;
+    renderFeed();
+    renderDots();
+  });
+});
+
+document.getElementById('searchInput').addEventListener('input', e => {
+  searchQuery = e.target.value;
+  renderFeed();
+  renderDots();
+});
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+renderFeed();
+renderDots();
+renderTicker();
+renderWatchlistMini();
+applyProvinceHeatmap();
+updateClock();
+setInterval(updateClock, 1000);
+
+// Update X watchlist count in status bar
+document.getElementById('xWatchCount').textContent =
+  X_WATCHLIST.filter(w => w.active).length + ' ACCOUNTS';
+
+// Keyboard shortcuts
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return;
+  if (e.key === '1') switchTab('intel');
+  if (e.key === '2') switchTab('stats');
+  if (e.key === '3') switchTab('sources');
+  if (e.key === 'Escape') {
+    document.getElementById('searchInput').value = '';
+    searchQuery = '';
+    renderFeed();
+    renderDots();
+  }
+  // Arrow keys cycle through threats
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    const filtered = getFilteredThreats();
+    const idx = filtered.findIndex(t => t.id === selectedId);
+    let next = e.key === 'ArrowDown' ? idx + 1 : idx - 1;
+    next = Math.max(0, Math.min(filtered.length - 1, next));
+    if (filtered[next]) selectThreat(filtered[next].id);
+    // Scroll selected item into view
+    const el = document.querySelector(`.threat-item[data-id="${filtered[next]?.id}"]`);
+    if (el) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+});
+
+// Auto-select first threat on load
+setTimeout(() => {
+  if (THREATS.length > 0) selectThreat(THREATS[0].id);
+}, 400);
+</script>
+</body>
+</html>
