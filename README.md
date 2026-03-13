@@ -1,5 +1,5 @@
 # 🍁 Project North E.Y.E.
-### Electronic Yield Exchange — Canadian Cyber Threat Intelligence Dashboard
+### E-crimes Yield Exchange — Canadian Cyber Threat Intelligence Dashboard
 
 > A fully serverless, open-source Canadian CTI platform. Transforms raw OSINT into a live visual threat map of Canada. Zero infrastructure — runs entirely on GitHub Actions + GitHub Pages.
 
