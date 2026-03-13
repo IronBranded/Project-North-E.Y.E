@@ -223,6 +223,20 @@ WATCHLIST = [
         "notes":    "Crypto compliance intelligence."
     },
     {
+        "handle":   "ransomwarelive",
+        "name":     "Ransomware.live",
+        "tier":     "osint",
+        "auto_confidence": 0.70,
+        "keywords": [
+            "canada", "canadian", ".ca", 
+            "alberta", "british columbia", "manitoba", "new brunswick", 
+            "newfoundland", "nova scotia", "ontario", "prince edward island", 
+            "quebec", "saskatchewan", "northwest territories", "nunavut", "yukon",
+            "AB", "BC", "MB", "NB", "NL", "NS", "ON", "PE", "QC", "SK", "NT", "NU", "YT"
+        ],
+        "notes":    "Real-time ransomware victim tracking. Comprehensive provincial keyword filter applied."
+    },
+    {
         "handle":   "sansforensics",
         "name":     "SANS Institute",
         "tier":     "osint",
